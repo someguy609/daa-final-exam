@@ -9,7 +9,7 @@
 ## Group Members
 
 | Name | Student ID |
-|---|---|---|---|
+|---|---|
 | Daniel Adhitthana | 5025231097 | 
 
 ---
