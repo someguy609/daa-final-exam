@@ -1,0 +1,81 @@
+@import 'tailwindcss';
+
+@theme {
+	--color-background: #09090b;
+	--color-foreground: #fafafa;
+
+	--color-card: #09090b;
+	--color-card-foreground: #fafafa;
+
+	--color-popover: #09090b;
+	--color-popover-foreground: #fafafa;
+
+	--color-primary: #fafafa;
+	--color-primary-foreground: #18181b;
+
+	--color-secondary: #27272a;
+	--color-secondary-foreground: #fafafa;
+
+	--color-muted: #18181b;
+	--color-muted-foreground: #a1a1aa;
+
+	--color-accent: #27272a;
+	--color-accent-foreground: #fafafa;
+
+	--color-destructive: #7f1d1d;
+	--color-destructive-foreground: #fafafa;
+
+	--color-border: #27272a;
+	--color-input: #27272a;
+	--color-ring: #d4d4d8;
+}
+
+body {
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	background-color: #09090b;
+	color: #fafafa;
+	margin: 0;
+	padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: 'Outfit', sans-serif;
+}
+
+/* Custom scrollbars matching Shadcn muted look */
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+::-webkit-scrollbar-track {
+	background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+	background: #27272a;
+	border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: #3f3f46;
+}
+
+/* Custom range inputs matching Shadcn style */
+input[type="range"] {
+	-webkit-appearance: none;
+	background: #18181b;
+	border: 1px solid #27272a;
+	outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	width: 14px;
+	height: 14px;
+	border-radius: 9999px;
+	background: #fafafa;
+	border: 1px solid #27272a;
+	cursor: pointer;
+	transition: transform 0.1s ease-in-out;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+	transform: scale(1.15);
+	background: #ffffff;
+}
