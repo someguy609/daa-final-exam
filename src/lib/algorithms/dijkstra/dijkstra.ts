@@ -36,7 +36,7 @@ export function findDijkstraPath(
 	const maxConstraintTime = getMaxConstraintTime(constraints, robotId);
 	const width = grid[0].length;
 	const height = grid.length;
-	const maxTimeLimit = startTime + width * height * 4 + maxConstraintTime + 50;
+	const maxTimeLimit = startTime + (width + height) * 4 + maxConstraintTime + 50;
 
 	function isBlockedByFinishedRobot(nx: number, ny: number, time: number): boolean {
 		if (!otherPaths) return false;
@@ -81,6 +81,10 @@ export function findDijkstraPath(
 		if (visited.has(stateKey)) continue;
 		visited.add(stateKey);
 		expandedNodes++;
+
+		if (expandedNodes > 200000) {
+			return null;
+		}
 
 		// Check if we reached the goal
 		if (x === goal.x && y === goal.y) {

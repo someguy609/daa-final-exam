@@ -289,6 +289,11 @@ export function runCBS(
 			return resultTemplate(false, {}, `CBS search timed out after ${timeoutMs}ms`);
 		}
 
+		// Safety node limit check to prevent OOM on conflict cascades
+		if (cbsCTNodes > 1000) {
+			return resultTemplate(false, {}, `CBS CT node limit exceeded (${cbsCTNodes} nodes)`);
+		}
+
 		const currNode = heap.pop()!;
 
 		// Check for conflicts

@@ -13,8 +13,8 @@ const SCENARIOS = [
 	{ id: 'S1', name: 'Scenario 1 (6×6)',   gridSize: 6,  robotCount: 2, itemCount: 6 },
 	{ id: 'S2', name: 'Scenario 2 (12×12)', gridSize: 12, robotCount: 3, itemCount: 9 },
 	{ id: 'S3', name: 'Scenario 3 (20×20)', gridSize: 20, robotCount: 4, itemCount: 12 },
-	{ id: 'S4', name: 'Scenario 4 (32×32)', gridSize: 32, robotCount: 5, itemCount: 15 },
-	{ id: 'S5', name: 'Scenario 5 (45×45)', gridSize: 45, robotCount: 6, itemCount: 18 }
+	{ id: 'S4', name: 'Scenario 4 (40×40)', gridSize: 40, robotCount: 5, itemCount: 15 },
+	{ id: 'S5', name: 'Scenario 5 (60×60)', gridSize: 60, robotCount: 6, itemCount: 18 }
 ];
 
 
@@ -26,8 +26,22 @@ const ALGORITHMS: { type: AlgorithmType; label: string }[] = [
 
 const density   = 0.15;   // 15% obstacle density — uniform across all scenarios
 const variance  = 0.50;   // 50% cost variance   — uniform across all scenarios
-const SEEDS     = ['seed_test_5', 'seed_test_6', 'seed_test_7'];
+const SEEDS     = ["uUDcAX6i","uKCWFcxa","ZMavqjIt","BEq3TaWN","wBhJq9MW"];
 const timeoutMs = 30000;  // 30 s per algorithm run
+
+function getStats(vals: number[]): { mean: number; std: number } {
+	if (vals.length === 0) return { mean: 0, std: 0 };
+	const mean = vals.reduce((sum, v) => sum + v, 0) / vals.length;
+	const variance = vals.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / vals.length;
+	const std = Math.sqrt(variance);
+	return { mean, std };
+}
+
+function formatStats(vals: number[], decimals: number = 0): string {
+	if (vals.length === 0) return '0 ± 0';
+	const { mean, std } = getStats(vals);
+	return `${mean.toFixed(decimals)} ± ${std.toFixed(decimals)}`;
+}
 
 async function runBenchmark() {
 	console.log('============================================================');
@@ -46,10 +60,10 @@ async function runBenchmark() {
 		console.log(`▶  ${sc.name}  (vertices: ${vertices})...`);
 
 		for (const alg of ALGORITHMS) {
-			let totalRuntime = 0;
-			let totalNodes = 0;
-			let totalSOC = 0;
-			let totalMakespan = 0;
+			const runtimes: number[] = [];
+			const nodesList: number[] = [];
+			const socsList: number[] = [];
+			const makespansList: number[] = [];
 			let successCount = 0;
 			let errors: string[] = [];
 
@@ -82,10 +96,10 @@ async function runBenchmark() {
 					const dur = performance.now() - t0;
 
 					if (res.success) {
-						totalRuntime += res.searchMetrics.runtimeMs || dur;
-						totalNodes += res.searchMetrics.expandedNodes;
-						totalSOC += res.solutionMetrics.totalCost;
-						totalMakespan += res.solutionMetrics.makespan;
+						runtimes.push(res.searchMetrics.runtimeMs || dur);
+						nodesList.push(res.searchMetrics.expandedNodes);
+						socsList.push(res.solutionMetrics.totalCost);
+						makespansList.push(res.solutionMetrics.makespan);
 						successCount++;
 					} else {
 						errors.push(res.errorMessage || 'Timeout');
@@ -96,10 +110,10 @@ async function runBenchmark() {
 			}
 
 			const displaySuccess = successCount > 0 ? (successCount === SEEDS.length ? 'Yes' : `Yes (${successCount}/${SEEDS.length})`) : 'No';
-			const avgRuntime = successCount > 0 ? Math.round(totalRuntime / successCount) : 0;
-			const avgNodes = successCount > 0 ? Math.round(totalNodes / successCount) : 0;
-			const avgSOC = successCount > 0 ? Math.round(totalSOC / successCount) : 0;
-			const avgMakespan = successCount > 0 ? Math.round(totalMakespan / successCount) : 0;
+			const runtimeStr = formatStats(runtimes, 1);
+			const nodesStr   = formatStats(nodesList, 0);
+			const socStr     = formatStats(socsList, 0);
+			const makespanStr = formatStats(makespansList, 0);
 			const combinedError = errors.length > 0 ? errors.join('; ') : '';
 
 			results.push({
@@ -108,19 +122,19 @@ async function runBenchmark() {
 				obstacleDensityPct: density * 100,
 				algorithm: alg.label,
 				success:       displaySuccess,
-				runtimeMs:     avgRuntime,
-				expandedNodes: avgNodes,
-				soc:           avgSOC,
-				makespan:      avgMakespan,
+				runtimeMs:     runtimeStr,
+				expandedNodes: nodesStr,
+				soc:           socStr,
+				makespan:      makespanStr,
 				error:         combinedError
 			});
 
 			if (successCount > 0) {
 				console.log(
-					`   ✓ ${alg.label.padEnd(15)}: avg ${avgRuntime} ms | ` +
-					`avg nodes: ${avgNodes.toLocaleString()} | ` +
-					`avg SOC: ${avgSOC} | ` +
-					`avg makespan: ${avgMakespan} ` +
+					`   ✓ ${alg.label.padEnd(15)}: ${runtimeStr} ms | ` +
+					`nodes: ${nodesStr} | ` +
+					`SOC: ${socStr} | ` +
+					`makespan: ${makespanStr} ` +
 					`(${successCount}/${SEEDS.length} seeds succeeded)`
 				);
 			} else {
@@ -131,30 +145,30 @@ async function runBenchmark() {
 	}
 
 	// ── Console summary table ─────────────────────────────────────────────────
-	const W = 100;
+	const W = 125;
 	console.log('='.repeat(W));
 	console.log(' BENCHMARK RESULTS'.padEnd(W));
 	console.log('='.repeat(W));
 	const hdr = [
-		'Scenario'.padEnd(22),
-		'Algorithm'.padEnd(16),
+		'Scenario'.padEnd(20),
+		'Algorithm'.padEnd(15),
 		'OK'.padEnd(4),
-		'ms'.padStart(8),
-		'Nodes'.padStart(10),
-		'SOC'.padStart(8),
-		'Makespan'.padStart(10),
+		'ms (mean ± std)'.padStart(18),
+		'Nodes (mean ± std)'.padStart(22),
+		'SOC (mean ± std)'.padStart(18),
+		'Makespan (mean ± std)'.padStart(22),
 	].join(' | ');
 	console.log(hdr);
 	console.log('-'.repeat(W));
 	for (const r of results) {
 		console.log([
-			r.name.padEnd(22),
-			r.algorithm.padEnd(16),
+			r.name.padEnd(20),
+			r.algorithm.padEnd(15),
 			r.success.padEnd(4),
-			String(r.runtimeMs).padStart(8),
-			String(r.expandedNodes).padStart(10),
-			String(r.soc).padStart(8),
-			String(r.makespan).padStart(10),
+			String(r.runtimeMs).padStart(18),
+			String(r.expandedNodes).padStart(22),
+			String(r.soc).padStart(18),
+			String(r.makespan).padStart(22),
 		].join(' | '));
 	}
 	console.log('='.repeat(W) + '\n');
@@ -163,7 +177,7 @@ async function runBenchmark() {
 	const csvHeaders = [
 		'Scenario ID', 'Scenario Name', 'Grid Vertices', 'Grid Size',
 		'Robots', 'Items', 'Obstacle Density (%)', 'Algorithm',
-		'Success', 'Runtime (ms)', 'Nodes Expanded', 'Sum of Costs (SOC)', 'Makespan', 'Error'
+		'Success', 'Runtime (mean ± std) (ms)', 'Nodes Expanded (mean ± std)', 'Sum of Costs (mean ± std)', 'Makespan (mean ± std)', 'Error'
 	];
 	const csvRows = [
 		csvHeaders.join(','),
@@ -177,10 +191,10 @@ async function runBenchmark() {
 			r.obstacleDensityPct,
 			`"${r.algorithm}"`,
 			r.success,
-			r.runtimeMs,
-			r.expandedNodes,
-			r.soc,
-			r.makespan,
+			`"${r.runtimeMs}"`,
+			`"${r.expandedNodes}"`,
+			`"${r.soc}"`,
+			`"${r.makespan}"`,
 			`"${r.error}"`
 		].join(','))
 	];

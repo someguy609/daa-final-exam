@@ -37,7 +37,7 @@ export function findAStarPath(
 	const maxConstraintTime = getMaxConstraintTime(constraints, robotId);
 	const width = grid[0].length;
 	const height = grid.length;
-	const maxTimeLimit = startTime + width * height * 4 + maxConstraintTime + 50;
+	const maxTimeLimit = startTime + (width + height) * 4 + maxConstraintTime + 50;
 
 	function getHeuristic(x: number, y: number): number {
 		return Math.abs(x - goal.x) + Math.abs(y - goal.y);
@@ -87,6 +87,10 @@ export function findAStarPath(
 		if (visited.has(stateKey)) continue;
 		visited.add(stateKey);
 		expandedNodes++;
+
+		if (expandedNodes > 200000) {
+			return null;
+		}
 
 		// Check if we reached the goal
 		if (x === goal.x && y === goal.y) {

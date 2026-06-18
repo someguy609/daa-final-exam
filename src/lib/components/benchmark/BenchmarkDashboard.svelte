@@ -17,7 +17,7 @@
 	// Benchmark configuration
 	let density = $state(0.15);
 	let variance = $state(0.5);
-	let seed = $state('seed_test_5');
+	let seed = $state('uUDcAX6i');
 
 	// Active selected chart tab
 	let activeTab = $state<'runtime' | 'nodes' | 'soc'>('runtime');
@@ -64,8 +64,8 @@
 			{ id: 'S1', gridSize: 6,  robotCount: 2, itemCount: 6 },
 			{ id: 'S2', gridSize: 12, robotCount: 3, itemCount: 9 },
 			{ id: 'S3', gridSize: 20, robotCount: 4, itemCount: 12 },
-			{ id: 'S4', gridSize: 32, robotCount: 5, itemCount: 15 },
-			{ id: 'S5', gridSize: 45, robotCount: 6, itemCount: 18 }
+			{ id: 'S4', gridSize: 40, robotCount: 5, itemCount: 15 },
+			{ id: 'S5', gridSize: 60, robotCount: 6, itemCount: 18 }
 		]);
 	}
 

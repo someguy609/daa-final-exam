@@ -206,33 +206,35 @@ def make_table(headers, rows, col_widths=None, bold_cells=None):
                 t.rows[ri].cells[ci].width = w
     return t
 
-# ── Compute best cells in results table ───────────────────────────────────────
-# Results: (id, vertices, robots, items, obstacles, algorithm, runtime, nodes, soc, makespan)
+# Results: (id, vertices, robots, items, algorithm, rt_mean, rt_std, nodes_mean, nodes_std, soc_mean, soc_std, makespan_mean, makespan_std)
 RESULTS = [
-    ('S1', '36',    '2', '6',  '15%', 'A*',          1,     185,    97,   18),
-    ('S1', '36',    '2', '6',  '15%', 'Dijkstra',     2,     514,    97,   21),
-    ('S1', '36',    '2', '6',  '15%', 'GBFS',         1,     252,   331,   63),
-    ('S2', '144',   '3', '9',  '15%', 'A*',        169,   15522,   312,   57),
-    ('S2', '144',   '3', '9',  '15%', 'Dijkstra',    14,    9481,   312,   59),
-    ('S2', '144',   '3', '9',  '15%', 'GBFS',       335,   48388,  1119,  468),
-    ('S3', '400',   '4', '12', '15%', 'A*',         96,   70169,   560,   89),
-    ('S3', '400',   '4', '12', '15%', 'Dijkstra',   154,   85496,   560,   74),
-    ('S3', '400',   '4', '12', '15%', 'GBFS',      1860,  112814,  1716,  488),
-    ('S4', '1,024', '5', '15', '15%', 'A*',        358,  184026,  1079,  131),
-    ('S4', '1,024', '5', '15', '15%', 'Dijkstra',  1880,  629168,  1079,  127),
-    ('S4', '1,024', '5', '15', '15%', 'GBFS',      3731,  100153, 25389, 4547),
-    ('S5', '2,025', '6', '18', '15%', 'A*',       1215,  449004,  1887,  173),
-    ('S5', '2,025', '6', '18', '15%', 'Dijkstra',  6345, 1710811,  1887,  216),
-    ('S5', '2,025', '6', '18', '15%', 'GBFS',      9212,  128642, 47361, 5969),
+    # Scenario 1 (6x6)
+    ('S1', '36', '2', '6', 'A*', 0.7, 0.3, 285.0, 201.0, 78.0, 15.0, 18.0, 2.0),
+    ('S1', '36', '2', '6', 'Dijkstra', 1.6, 0.5, 809.0, 476.0, 78.0, 15.0, 18.0, 2.0),
+    ('S1', '36', '2', '6', 'GBFS', 0.7, 0.4, 58.0, 27.0, 91.0, 12.0, 16.0, 2.0),
+    # Scenario 2 (12x12)
+    ('S2', '144', '3', '9', 'A*', 5.8, 3.6, 4484.0, 2650.0, 303.0, 35.0, 45.0, 6.0),
+    ('S2', '144', '3', '9', 'Dijkstra', 14.8, 9.4, 11989.0, 5812.0, 303.0, 35.0, 47.0, 5.0),
+    ('S2', '144', '3', '9', 'GBFS', 2.2, 2.4, 876.0, 947.0, 491.0, 139.0, 87.0, 49.0),
+    # Scenario 3 (20x20)
+    ('S3', '400', '4', '12', 'A*', 57.8, 74.0, 39016.0, 39661.0, 577.0, 72.0, 90.0, 26.0),
+    ('S3', '400', '4', '12', 'Dijkstra', 103.0, 111.9, 71354.0, 68494.0, 577.0, 72.0, 85.0, 19.0),
+    ('S3', '400', '4', '12', 'GBFS', 3.9, 2.6, 2064.0, 1103.0, 1011.0, 299.0, 140.0, 57.0),
+    # Scenario 4 (40x40)
+    ('S4', '1,600', '5', '15', 'A*', 1159.6, 890.1, 383961.0, 218692.0, 1354.0, 61.0, 165.0, 35.0),
+    ('S4', '1,600', '5', '15', 'Dijkstra', 1307.0, 685.0, 537082.0, 219978.0, 1354.0, 61.0, 150.0, 29.0),
+    ('S4', '1,600', '5', '15', 'GBFS', 16.6, 13.5, 6392.0, 4214.0, 3165.0, 699.0, 379.0, 97.0),
+    # Scenario 5 (60x60)
+    ('S5', '3,600', '6', '18', 'A*', 959.6, 224.5, 425353.0, 81771.0, 2340.0, 220.0, 197.0, 22.0),
+    ('S5', '3,600', '6', '18', 'Dijkstra', 5164.0, 1147.7, 1372716.0, 325315.0, 2340.0, 220.0, 230.0, 43.0),
+    ('S5', '3,600', '6', '18', 'GBFS', 83.2, 84.4, 20276.0, 19006.0, 6215.0, 1044.0, 703.0, 201.0)
 ]
 
-# Columns 6=runtime, 7=nodes, 8=soc, 9=makespan; lower is better for all
-METRIC_COLS = [6, 7, 8, 9]
+# Columns to evaluate are the mean values: 5 (runtime), 7 (nodes), 9 (soc), 11 (makespan)
+METRIC_COLS = [5, 7, 9, 11]
 
 def compute_bold_cells(data):
     bold = set()
-    # group by scenario id
-    from itertools import groupby
     scenarios = {}
     for i, row in enumerate(data):
         sid = row[0]
@@ -241,26 +243,34 @@ def compute_bold_cells(data):
         for mc in METRIC_COLS:
             vals = [data[i][mc] for i in indices]
             best = min(vals)
+            # map back to display columns: mc=5 => display_col=5, mc=7 => 6, mc=9 => 7, mc=11 => 8
+            display_col = 5 + (mc - 5) // 2
             for i in indices:
                 if data[i][mc] == best:
-                    bold.add((i, mc))  # mc is actual column in full row
+                    bold.add((i, display_col))
     return bold
 
-BOLD_CELLS_RAW = compute_bold_cells(RESULTS)
+BOLD_CELLS = compute_bold_cells(RESULTS)
 
-# Display rows: stringify numeric columns
-def fmt_num(v):
-    if isinstance(v, int):
-        return f'{v:,}'
-    return str(v)
+def fmt_stat(mean, std, decimals=0):
+    if decimals > 0:
+        return f"{mean:,.{decimals}f} ± {std:.{decimals}f}"
+    return f"{int(round(mean)):,} ± {int(round(std)):,}"
 
-RESULTS_DISPLAY = [
-    list(row[:6]) + [fmt_num(row[6]), fmt_num(row[7]), fmt_num(row[8]), fmt_num(row[9])]
-    for row in RESULTS
-]
-
-# Map raw metric col indices (6-9) to display col indices (6-9, same)
-BOLD_CELLS = BOLD_CELLS_RAW   # same indices since display cols match
+RESULTS_DISPLAY = []
+for row in RESULTS:
+    display_row = [
+        row[0], # id
+        row[1], # vertices
+        row[2], # robots
+        row[3], # items
+        row[4], # algorithm
+        fmt_stat(row[5], row[6], 1),  # runtime (1 decimal)
+        fmt_stat(row[7], row[8], 0),  # nodes
+        fmt_stat(row[9], row[10], 0), # soc
+        fmt_stat(row[11], row[12], 0) # makespan
+    ]
+    RESULTS_DISPLAY.append(display_row)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TITLE PAGE
@@ -736,36 +746,34 @@ body(
 )
 bullet('Nodes expanded: ',
        'A* expands significantly fewer states through heuristic guidance on larger grids. '
-       'In S5 (2,025 vertices), A* expands 515,196 nodes vs. Dijkstra\'s 3,541,512, '
-       'a 6.8x reduction, illustrating the benefit of informed search.')
+       'In S5 (3,600 vertices), A* expands 425,353 nodes vs. Dijkstra\'s 1,372,716, '
+       'a 3.2x reduction, illustrating the benefit of informed search.')
 bullet('Runtime: ',
        'A* is consistently faster on large grids. '
-       'In S5, A* finishes in 2,473 ms vs. Dijkstra\'s 17,878 ms, a 7.2x speedup.')
+       'In S5, A* finishes in 959.6 ms vs. Dijkstra\'s 5,164.0 ms, a 5.4x speedup.')
 bullet('Regime preference: ',
        'A* dominates on larger grids and higher agent counts where the heuristic provides strong guidance. '
        'Dijkstra is only competitive on small grids (e.g. S1 and S2) '
        'where the absolute node count is small and search overhead is minimal.')
 bullet('GBFS vs optimal: ',
-       'GBFS produces fewer per-path node expansions but its suboptimal '
-       'routes cause massive CBS conflict trees. In S2, GBFS took 1,438 ms '
-       'against A*\'s 556 ms, and in S5, GBFS took 7,309 ms vs. A*\'s 2,473 ms, '
-       'confirming that greedy low-level search is counterproductive in multi-agent settings.')
+       'GBFS produces fewer node expansions and faster individual searches (e.g. in S5, GBFS finishes in 83.2 ms vs. A*\'s 959.6 ms), '
+       'but its suboptimal routes cause massive suboptimality in path quality, raising makespan to 703 vs. A*\'s 197 and SOC to 6,215 vs. A*\'s 2,340.')
 
 h2('3.4  Empirical Study')
 h3('Experimental Setup')
 bullet('Machine: ', 'Linux x86_64, Intel Core i7, 16 GB RAM.')
 bullet('Runtime: ', 'Node.js 24, TypeScript 5, tsx 4.22.4.')
-bullet('Timing: ', 'Wall-clock time via performance.now() around the full runCBS() call. Single run per configuration; seed fixed to "seed_test_5".')
-bullet('Obstacle density: ', '15%, uniform across all five scenarios.')
+bullet('Timing: ', 'Wall-clock time via performance.now() around the full runCBS() call. Runs averaged over 5 random seeds: ["uUDcAX6i", "uKCWFcxa", "ZMavqjIt", "BEq3TaWN", "wBhJq9MW"].')
+bullet('Obstacle density: ', '15%, uniform across all five scenarios (not shown in results table as it is uniform).')
 bullet('Cost variance: ', '50%, uniform across all five scenarios. Cell costs drawn from {1, ..., 10}.')
-bullet('Scale: ', '5 scenarios spanning 36 to 2,025 vertices (56x increase from S1 to S5).')
+bullet('Scale: ', '5 scenarios spanning 36 to 3,600 vertices (100x increase from S1 to S5).')
 spacer(4)
 
-h3('Results (bold = best in each metric per scenario; lower is better for all metrics)')
+h3('Results (bold = best in each metric per scenario; values are averages across seeds; lower is better for all metrics)')
 make_table(
-    ['ID', 'Vertices', 'Robots', 'Items', 'Obstacles', 'Algorithm', 'Runtime (ms)', 'Nodes Exp.', 'SOC', 'Makespan'],
+    ['ID', 'Vertices', 'Robots', 'Items', 'Algorithm', 'Runtime (ms)', 'Nodes Exp.', 'SOC', 'Makespan'],
     RESULTS_DISPLAY,
-    [Cm(0.9), Cm(1.5), Cm(1.2), Cm(1.1), Cm(1.6), Cm(2.2), Cm(2.3), Cm(2.0), Cm(1.3), Cm(1.8)],
+    [Cm(0.9), Cm(1.6), Cm(1.3), Cm(1.2), Cm(2.2), Cm(2.6), Cm(2.4), Cm(1.6), Cm(2.0)],
     bold_cells=BOLD_CELLS
 )
 spacer(6)
@@ -773,31 +781,30 @@ spacer(6)
 h2('3.5  Theory vs Practice & Correctness Cross-Check')
 h3('Correctness Cross-Check')
 body(
-    'A* and Dijkstra produce identical or nearly identical SOC values on every scenario '
-    '(S1: 82, S2: 425, S3: 410, S4: 1180/1181, S5: 2020). The 1-unit difference in S4 '
-    'is a result of minor differences in space-time tie-breaking under constraints. '
+    'A* and Dijkstra produce identical SOC values on every scenario '
+    '(S1: 78, S2: 303, S3: 577, S4: 1354, S5: 2340). '
     'This empirically confirms that both low-level implementations are correct '
     'and that the CBS engine resolves conflicts consistently. GBFS returns strictly higher SOC '
-    'in all cases (90, 2781, 684, 10754, 54079), confirming the theoretical prediction that '
+    'in all cases (S1: 91, S2: 491, S3: 1011, S4: 3165, S5: 6215), confirming the theoretical prediction that '
     'greedy search is suboptimal.'
 )
 body(
     'Makespan values differ slightly between A* and Dijkstra at equal SOC '
-    '(e.g., S1: A* makespan 14 vs. Dijkstra 15). This is expected: both '
+    '(e.g., S2: A* makespan 45 vs. Dijkstra 47). This is expected: both '
     'algorithms may find different optimal-cost paths through the space-time graph '
     'with different total lengths. The SOC is equal but one solution may allow a '
     'robot to arrive earlier by waiting less.'
 )
 h3('Empirical Growth Rate')
 body(
-    'For A*, wall-clock runtime grows from 1 ms at S1 (36 vertices, 2 robots, 6 items) '
-    'to 2,473 ms at S5 (2,025 vertices, 6 robots, 18 items). The growth is super-linear '
+    'For A*, wall-clock runtime grows from 0.7 ms at S1 (36 vertices, 2 robots, 6 items) '
+    'to 959.6 ms at S5 (3,600 vertices, 6 robots, 18 items). The growth is super-linear '
     'but remains highly manageable. This scaling confirms that CBS remains practical as both the '
     'grid scale and agent counts increase.'
 )
 body(
     'For GBFS, suboptimality is high, especially at S4 and S5: in S5, GBFS has a makespan '
-    'of 5,560 steps (vs. A*\'s 185) and an SOC of 54,079 (vs. A*\'s 2,020). This extreme '
+    'of 703 steps (vs. A*\'s 197) and an SOC of 6,215 (vs. A*\'s 2,340). This extreme '
     'suboptimality is caused by greedy choices that ignore path lengths, causing agents to take '
     'redundant loops and generate excessive spatial conflicts.'
 )
@@ -818,7 +825,7 @@ body(
     'We designed and built a complete Multi-Agent Path Finding system for warehouse '
     'logistics, formulated as a weighted space-time graph. CBS with A* as the '
     'low-level planner is both correct (proven SOC-optimal in Section 3.1) and '
-    'practical, solving 45x45 grids with 6 robots and 18 items in under 2.5 seconds using A*.'
+    'practical, solving 60x60 grids with 6 robots and 18 items in under 1.0 seconds on average using A*.'
 )
 bullet('A*: ', 'recommended production algorithm; optimal SOC, fast, empirically verified.')
 bullet('Dijkstra: ', 'reliable correctness cross-check; produces identical SOC on every instance.')
@@ -833,17 +840,11 @@ bullet('Heuristic on weighted grids: ',
        'The Manhattan-distance heuristic counts steps rather than weighted costs. '
        'A precomputed True-Distance heuristic (BFS from goal on the actual weight map) '
        'would prune more nodes and reduce runtimes further.')
-bullet('Single-seed evaluation: ',
-       'All benchmark runs use one fixed seed. Variance across seeds and '
-       'obstacle configurations is not captured.')
-
 h2('4.3  Future Work')
 bullet('Enhanced CBS (ECBS) or Priority-Based Search (PBS) ',
        'for suboptimal but scalable large-fleet routing (50+ robots).')
 bullet('Weighted A* with True-Distance heuristic ',
        'to improve performance on high-variance cost grids.')
-bullet('Multi-seed statistical evaluation ',
-       'with confidence intervals and multiple obstacle families.')
 bullet('Docker container packaging ',
        'so the benchmark is fully reproducible on any machine without manual setup.')
 
