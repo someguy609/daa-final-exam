@@ -3,22 +3,14 @@
 
 **Course:** EF234405 - Design & Analysis of Algorithms  
 **Exam:** Final Exam - Group Capstone Project  
-**Class:** International Undergraduate Program (IUP)  
-**Date:** June 2026  
-**Deadline:** 18 June 2026, 23:59 WIB  
-**GitHub:** `https://github.com/<your-repo>`  
-**Benchmark Command:** `pnpm benchmark`  
-**Language:** TypeScript 5 / Node.js 24 / SvelteKit 2
 
 ---
 
 ## Group Members
 
-| Name | Student ID | Contribution | Role |
+| Name | Student ID |
 |---|---|---|---|
-| [Full Name 1] | [ID 1] | 34% | Graph model; A\*, Dijkstra, GBFS; correctness proof |
-| [Full Name 2] | [ID 2] | 33% | CBS engine; Web Worker; SvelteKit GUI |
-| [Full Name 3] | [ID 3] | 33% | CLI benchmark; analysis; report |
+| Daniel Adhitthana | 5025231097 | 
 
 ---
 
@@ -396,55 +388,9 @@ We designed and built a complete Multi-Agent Path Finding system for warehouse l
 
 - **Enhanced CBS (ECBS) or Priority-Based Search (PBS)** for suboptimal but scalable large-fleet routing (50+ robots).
 - **Weighted A\* with True-Distance heuristic** to improve performance on high-variance cost grids.
-- **Docker container packaging** so the benchmark is fully reproducible on any machine without manual setup.
 
 ### 4.4 Group Contribution Table
 
 | Name | Student ID | Contribution | Role & Responsibility |
 |---|---|---|---|
-| [Full Name 1] | [ID 1] | 34% | Formal graph model; A\*, Dijkstra, GBFS implementations; correctness proof |
-| [Full Name 2] | [ID 2] | 33% | CBS engine; Web Worker integration; SvelteKit GUI; scenario generator |
-| [Full Name 3] | [ID 3] | 33% | CLI benchmark harness; complexity analysis; empirical study; this report |
-
----
-
-## References
-
-[1] Sharon, G., Stern, R., Felner, A., & Sturtevant, N. (2015). Conflict-Based Search for Optimal Multi-Agent Pathfinding. *Artificial Intelligence*, 219, 40-66.
-
-[2] Hart, P. E., Nilsson, N. J., & Raphael, B. (1968). A Formal Basis for the Heuristic Determination of Minimum Cost Paths. *IEEE Transactions on Systems Science and Cybernetics*, 4(2), 100-107.
-
-[3] Dijkstra, E. W. (1959). A Note on Two Problems in Connexion with Graphs. *Numerische Mathematik*, 1(1), 269-271.
-
-[4] Stern, R., et al. (2019). Multi-Agent Pathfinding: Definitions, Variants, and Benchmarks. *Proceedings of SOCS 2019*.
-
-[5] SvelteKit Documentation. (2024). https://kit.svelte.dev/docs
-
-[6] Node.js v24 Release Notes. (2024). https://nodejs.org/en/blog/release
-
----
-
-## Academic Integrity Pledge
-
-**EF234405 Design & Analysis of Algorithms - Final Exam**  
-Group Capstone Project
-
----
-
-*By the name of Allah (God) Almighty, I hereby pledge and declare that I have completed this Final Exam project as part of my team's independent work. I have not engaged in cheating, plagiarism, or received unauthorized assistance in any form. I further declare that any use of external resources, references, or tools has been fully disclosed in the report and adheres to the guidelines provided. I am fully aware of and understand that I will accept all consequences if I am found to have violated this academic integrity pledge.*
-
----
-
-Surabaya, 18 June 2026
-
-&nbsp;
-
-| | | |
-|:---:|:---:|:---:|
-| _______________________ | _______________________ | _______________________ |
-| **[Full Name 1]** | **[Full Name 2]** | **[Full Name 3]** |
-| [Student ID 1] | [Student ID 2] | [Student ID 3] |
-
----
-
-*This Declaration must be signed by all members and included as `Declaration.pdf` in the final submission ZIP archive.*
+| Daniel Adhitthana | 5025231097 | 100% | Formal graph model; A\*, Dijkstra, GBFS implementations; correctness proof |
