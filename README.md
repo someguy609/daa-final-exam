@@ -393,4 +393,4 @@ We designed and built a complete Multi-Agent Path Finding system for warehouse l
 
 | Name | Student ID | Contribution | Role & Responsibility |
 |---|---|---|---|
-| Daniel Adhitthana | 5025231097 | 100% | Formal graph model; A\*, Dijkstra, GBFS implementations; correctness proof |
+| Daniel Adhitthana | 5025231097 | 100% | Implemented all algorithms and UI, wrote the report |
