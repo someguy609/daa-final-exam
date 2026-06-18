@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Play, Loader2, BarChart2, Award, Clock, Trash2 } from '@lucide/svelte';
+	import { Play, Loader2, BarChart2, Clock, Trash2 } from '@lucide/svelte';
 	import {
 		isBenchmarkingStore,
 		benchmarkProgressStore,

@@ -6,7 +6,6 @@
 		robotsStore,
 		docksStore,
 		itemsStore,
-		robotGoalsStore,
 		pathsStore,
 		playbackSpeedStore,
 		currentPositionsStore,
@@ -14,7 +13,7 @@
 		recomputeRobotGoals,
 		screenshotTriggerStore
 	} from '../../stores/simulationStore';
-	import type { Cell, Position, Path } from '../../simulation/models/types';
+	import type { Cell } from '../../simulation/models/types';
 	import { BIZARRE_NAMES } from '../../simulation/generators/generator';
 
 	interface Props {

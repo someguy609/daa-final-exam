@@ -11,12 +11,8 @@
 		robotsStore,
 		docksStore,
 		itemsStore,
-		robotGoalsStore,
 		pathsStore,
 		seedStore,
-		timestepStore,
-		currentPositionsStore,
-		benchmarkProgressStore,
 		generateScenario,
 		errorMessageStore,
 		assignItemRobot

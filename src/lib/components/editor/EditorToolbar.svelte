@@ -20,7 +20,6 @@
 		robotGoalsStore,
 		pathsStore,
 		seedStore,
-		currentPositionsStore,
 		benchmarkProgressStore,
 		errorMessageStore,
 		screenshotTriggerStore
