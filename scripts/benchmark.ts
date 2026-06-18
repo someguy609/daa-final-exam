@@ -11,10 +11,10 @@ const __dirname = path.dirname(__filename);
 // All five scenarios use the SAME obstacle density (15%) and cost variance (50%).
 const SCENARIOS = [
 	{ id: 'S1', name: 'Scenario 1 (6×6)',   gridSize: 6,  robotCount: 2, itemCount: 6 },
-	{ id: 'S2', name: 'Scenario 2 (12×12)', gridSize: 12, robotCount: 2, itemCount: 6 },
-	{ id: 'S3', name: 'Scenario 3 (20×20)', gridSize: 20, robotCount: 2, itemCount: 6 },
-	{ id: 'S4', name: 'Scenario 4 (32×32)', gridSize: 32, robotCount: 2, itemCount: 6 },
-	{ id: 'S5', name: 'Scenario 5 (45×45)', gridSize: 45, robotCount: 2, itemCount: 6 }
+	{ id: 'S2', name: 'Scenario 2 (12×12)', gridSize: 12, robotCount: 3, itemCount: 9 },
+	{ id: 'S3', name: 'Scenario 3 (20×20)', gridSize: 20, robotCount: 4, itemCount: 12 },
+	{ id: 'S4', name: 'Scenario 4 (32×32)', gridSize: 32, robotCount: 5, itemCount: 15 },
+	{ id: 'S5', name: 'Scenario 5 (45×45)', gridSize: 45, robotCount: 6, itemCount: 18 }
 ];
 
 
@@ -26,7 +26,7 @@ const ALGORITHMS: { type: AlgorithmType; label: string }[] = [
 
 const density   = 0.15;   // 15% obstacle density — uniform across all scenarios
 const variance  = 0.50;   // 50% cost variance   — uniform across all scenarios
-const seed      = 'bench_seed';
+const seed      = 'seed_test_5';
 const timeoutMs = 30000;  // 30 s per algorithm run
 
 async function runBenchmark() {
