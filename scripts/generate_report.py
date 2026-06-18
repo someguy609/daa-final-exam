@@ -11,6 +11,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+import re
 
 doc = Document()
 
@@ -60,6 +61,39 @@ def _fmt(run, bold=False, size=BODY_SIZE, font=BODY_FONT, italic=False):
     run.font.name = font; run.font.size = size
     run.font.color.rgb = BLACK
 
+def add_runs(paragraph, text, bold=False, italic=False):
+    # Parses text for mathematical subscript notation (base_sub) and formats it as subscript in Word.
+    # Excludes filenames like benchmark_results.csv or non-whitelist bases.
+    pattern = re.compile(r'(\|\|u\s*-\s*v\|\||[a-zA-Z]+)_([a-zA-Z0-9,]+)')
+    whitelist = {'R', 'D', 'I', 'P', 'T', 'sum', 'from', 'to', 'x', 'y', '||u - v||', '||u-v||'}
+    
+    last_idx = 0
+    for match in pattern.finditer(text):
+        base = match.group(1)
+        sub = match.group(2)
+        
+        if base in whitelist:
+            # Add text before match
+            if match.start() > last_idx:
+                r = paragraph.add_run(text[last_idx:match.start()])
+                _fmt(r, bold=bold, italic=italic)
+            
+            # Add base run
+            r_base = paragraph.add_run(base)
+            _fmt(r_base, bold=bold, italic=italic)
+            
+            # Add subscript run
+            r_sub = paragraph.add_run(sub)
+            _fmt(r_sub, bold=bold, italic=italic)
+            r_sub.font.subscript = True
+            
+            last_idx = match.end()
+            
+    # Add remaining text
+    if last_idx < len(text):
+        r = paragraph.add_run(text[last_idx:])
+        _fmt(r, bold=bold, italic=italic)
+
 # ── Paragraph factories ────────────────────────────────────────────────────────
 def body(text='', bold=False, italic=False):
     p = doc.add_paragraph()
@@ -67,7 +101,7 @@ def body(text='', bold=False, italic=False):
     p.paragraph_format.space_before = Pt(0)
     p.paragraph_format.space_after  = Pt(6)
     if text:
-        r = p.add_run(text); _fmt(r, bold=bold, italic=italic)
+        add_runs(p, text, bold=bold, italic=italic)
     return p
 
 def h1(text):
@@ -76,7 +110,6 @@ def h1(text):
     p.paragraph_format.space_before = Pt(14)
     p.paragraph_format.space_after  = Pt(4)
     r = p.add_run(text); _fmt(r, bold=True, size=Pt(14))
-    r.underline = True
     return p
 
 def h2(text):
@@ -100,9 +133,9 @@ def bullet(label='', text=''):
     p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     p.paragraph_format.space_after = Pt(3)
     if label:
-        rb = p.add_run(label); _fmt(rb, bold=True)
+        add_runs(p, label, bold=True)
     if text:
-        rt = p.add_run(text); _fmt(rt)
+        add_runs(p, text)
     return p
 
 def spacer(pts=4):
