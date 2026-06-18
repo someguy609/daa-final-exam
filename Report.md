@@ -317,10 +317,10 @@ CBS explores the Constraint Tree in Best-First order by SOC (Lemma 2). Adding co
 
 Both A\* and Dijkstra are cost-optimal at the low level. They produce identical SOC values in every benchmark run. The key differences are in efficiency:
 
-- **Nodes expanded:** A\* expands significantly fewer states through heuristic guidance on larger grids. In S5 (2,025 vertices), A\* expands 515,196 nodes vs. Dijkstra's 3,541,512, a 6.8x reduction, illustrating the benefit of informed search.
-- **Runtime:** A\* is consistently faster on large grids. In S5, A\* finishes in 2,473 ms vs. Dijkstra's 17,878 ms, a 7.2x speedup.
+- **Nodes expanded:** A\* expands significantly fewer states through heuristic guidance on larger grids. In S5 (2,025 vertices), A\* expands 449,004 nodes vs. Dijkstra's 1,710,811, a 3.8x reduction, illustrating the benefit of informed search.
+- **Runtime:** A\* is consistently faster on large grids. In S5, A\* finishes in 1,215 ms vs. Dijkstra's 6,345 ms, a 5.2x speedup.
 - **Regime preference:** A\* dominates on larger grids and higher agent counts where the heuristic provides strong guidance. Dijkstra is only competitive on small grids (e.g. S1 and S2) where the absolute node count is small and search overhead is minimal.
-- **GBFS vs optimal:** GBFS produces fewer per-path node expansions but its suboptimal routes cause massive CBS conflict trees. In S2, GBFS took 1,438 ms against A\*'s 556 ms, and in S5, GBFS took 7,309 ms vs. A\*'s 2,473 ms, confirming that greedy low-level search is counterproductive in multi-agent settings.
+- **GBFS vs optimal:** GBFS produces fewer per-path node expansions on some scales but its suboptimal routes cause massive CBS conflict trees. In S2, GBFS took 335 ms against A\*'s 169 ms, and in S5, GBFS took 9,212 ms vs. A\*'s 1,215 ms, confirming that greedy low-level search is counterproductive in multi-agent settings.
 
 ### 3.4 Empirical Study
 
@@ -328,44 +328,44 @@ Both A\* and Dijkstra are cost-optimal at the low level. They produce identical 
 
 - **Machine:** Linux x86_64, Intel Core i7, 16 GB RAM.
 - **Runtime:** Node.js 24, TypeScript 5, tsx 4.22.4.
-- **Timing:** Wall-clock time via `performance.now()` around the full `runCBS()` call. Single run per configuration; seed fixed to `"seed_test_5"`.
+- **Timing:** Wall-clock time via `performance.now()` around the full `runCBS()` call. Runs averaged over multiple seeds: `["seed_test_5", "seed_test_6", "seed_test_7"]`.
 - **Obstacle density:** 15%, uniform across all five scenarios.
 - **Cost variance:** 50%, uniform across all five scenarios. Cell costs drawn from {1, ..., 10}.
 - **Scale:** 5 scenarios spanning 36 to 2,025 vertices (56x increase from S1 to S5).
 
-#### Results (bold = best per metric per scenario; lower is better for all metrics)
+#### Results (bold = best per metric per scenario; values are averages across seeds; lower is better for all metrics)
 
 | ID | Vertices | Robots | Items | Obstacles | Algorithm | Runtime (ms) | Nodes Exp. | SOC | Makespan |
 |---|---|---|---|---|---|---|---|---|---|
-| S1 | 36 | 2 | 6 | 15% | A\* | **1** | 136 | **82** | **14** |
-| S1 | 36 | 2 | 6 | 15% | Dijkstra | 5 | 222 | **82** | 15 |
-| S1 | 36 | 2 | 6 | 15% | GBFS | **1** | **36** | 90 | **14** |
-| S2 | 144 | 3 | 9 | 15% | A\* | 556 | 41,329 | **425** | 90 |
-| S2 | 144 | 3 | 9 | 15% | Dijkstra | **51** | **12,953** | **425** | **87** |
-| S2 | 144 | 3 | 9 | 15% | GBFS | 1,438 | 144,875 | 2,781 | 1,335 |
-| S3 | 400 | 4 | 12 | 15% | A\* | **79** | 48,558 | **410** | **62** |
-| S3 | 400 | 4 | 12 | 15% | Dijkstra | 101 | 65,367 | **410** | 70 |
-| S3 | 400 | 4 | 12 | 15% | GBFS | 187 | **8,437** | 684 | 130 |
-| S4 | 1,024 | 5 | 15 | 15% | A\* | **865** | 286,221 | 1,181 | 147 |
-| S4 | 1,024 | 5 | 15 | 15% | Dijkstra | 3,479 | 1,095,709 | **1,180** | **145** |
-| S4 | 1,024 | 5 | 15 | 15% | GBFS | 3,605 | **87,664** | 10,754 | 2,178 |
-| S5 | 2,025 | 6 | 18 | 15% | A\* | **2,473** | 515,196 | **2,020** | **185** |
-| S5 | 2,025 | 6 | 18 | 15% | Dijkstra | 17,878 | 3,541,512 | **2,020** | 282 |
-| S5 | 2,025 | 6 | 18 | 15% | GBFS | 7,309 | **82,146** | 54,079 | 5,560 |
+| S1 | 36 | 2 | 6 | 15% | A\* | **1** | **185** | **97** | **18** |
+| S1 | 36 | 2 | 6 | 15% | Dijkstra | 2 | 514 | **97** | 21 |
+| S1 | 36 | 2 | 6 | 15% | GBFS | **1** | 252 | 331 | 63 |
+| S2 | 144 | 3 | 9 | 15% | A\* | 169 | 15,522 | **312** | **57** |
+| S2 | 144 | 3 | 9 | 15% | Dijkstra | **14** | **9,481** | **312** | 59 |
+| S2 | 144 | 3 | 9 | 15% | GBFS | 335 | 48,388 | 1,119 | 468 |
+| S3 | 400 | 4 | 12 | 15% | A\* | **96** | **70,169** | **560** | 89 |
+| S3 | 400 | 4 | 12 | 15% | Dijkstra | 154 | 85,496 | **560** | **74** |
+| S3 | 400 | 4 | 12 | 15% | GBFS | 1,860 | 112,814 | 1,716 | 488 |
+| S4 | 1,024 | 5 | 15 | 15% | A\* | **358** | 184,026 | **1,079** | 131 |
+| S4 | 1,024 | 5 | 15 | 15% | Dijkstra | 1,880 | 629,168 | **1,079** | **127** |
+| S4 | 1,024 | 5 | 15 | 15% | GBFS | 3,731 | **100,153** | 25,389 | 4,547 |
+| S5 | 2,025 | 6 | 18 | 15% | A\* | **1,215** | 449,004 | **1,887** | **173** |
+| S5 | 2,025 | 6 | 18 | 15% | Dijkstra | 6,345 | 1,710,811 | **1,887** | 216 |
+| S5 | 2,025 | 6 | 18 | 15% | GBFS | 9,212 | **128,642** | 47,361 | 5,969 |
 
 ### 3.5 Theory vs Practice & Correctness Cross-Check
 
 #### Correctness Cross-Check
 
-A\* and Dijkstra produce identical or nearly identical SOC values on every scenario (S1: 82, S2: 425, S3: 410, S4: 1180/1181, S5: 2020). The 1-unit difference in S4 is a result of minor differences in space-time tie-breaking under constraints. This empirically confirms that both low-level implementations are correct and that the CBS engine resolves conflicts consistently. GBFS returns strictly higher SOC in all cases (90, 2,781, 684, 10,754, 54,079), confirming the theoretical prediction that greedy search is suboptimal.
+A\* and Dijkstra produce identical SOC values on every scenario when averaged across seeds (S1: 97, S2: 312, S3: 560, S4: 1079, S5: 1887). This empirically confirms that both low-level implementations are correct and that the CBS engine resolves conflicts consistently. GBFS returns strictly higher SOC in all cases (331, 1,119, 1,716, 25,389, 47,361), confirming the theoretical prediction that greedy search is suboptimal.
 
-Makespan values differ slightly between A\* and Dijkstra at equal SOC (e.g., S1: A\* makespan 14 vs. Dijkstra 15). This is expected: both algorithms may find different optimal-cost paths through the space-time graph with different total lengths.
+Makespan values differ slightly between A\* and Dijkstra at equal SOC (e.g., S1: A\* makespan 18 vs. Dijkstra 21). This is expected: both algorithms may find different optimal-cost paths through the space-time graph with different total lengths.
 
 #### Empirical Growth Rate
 
-For A\*, wall-clock runtime grows from 1 ms at S1 (36 vertices, 2 robots, 6 items) to 2,473 ms at S5 (2,025 vertices, 6 robots, 18 items). The growth is super-linear but remains highly manageable. This scaling confirms that CBS remains practical as both the grid scale and agent counts increase.
+For A\*, wall-clock runtime grows from 1 ms at S1 (36 vertices, 2 robots, 6 items) to 1,215 ms at S5 (2,025 vertices, 6 robots, 18 items). The growth is super-linear but remains highly manageable. This scaling confirms that CBS remains practical as both the grid scale and agent counts increase.
 
-For GBFS, suboptimality is high, especially at S4 and S5: in S5, GBFS has a makespan of 5,560 steps (vs. A\*s 185) and an SOC of 54,079 (vs. A\*'s 2,020). This extreme suboptimality is caused by greedy choices that ignore path lengths, causing agents to take redundant loops and generate excessive spatial conflicts.
+For GBFS, suboptimality is high, especially at S4 and S5: in S5, GBFS has a makespan of 5,969 steps (vs. A\*'s 173) and an SOC of 47,361 (vs. A\*'s 1,887). This extreme suboptimality is caused by greedy choices that ignore path lengths, causing agents to take redundant loops and generate excessive spatial conflicts.
 
 ---
 
@@ -373,7 +373,7 @@ For GBFS, suboptimality is high, especially at S4 and S5: in S5, GBFS has a make
 
 ### 4.1 Summary of Findings
 
-We designed and built a complete Multi-Agent Path Finding system for warehouse logistics, formulated as a weighted space-time graph. CBS with A\* as the low-level planner is both correct (proven SOC-optimal in Section 3.1) and practical, solving 45x45 grids with 6 robots and 18 items in under 2.5 seconds using A\*.
+We designed and built a complete Multi-Agent Path Finding system for warehouse logistics, formulated as a weighted space-time graph. CBS with A\* as the low-level planner is both correct (proven SOC-optimal in Section 3.1) and practical, solving 45x45 grids with 6 robots and 18 items in under 1.3 seconds on average using A\*.
 
 - **A\*:** recommended production algorithm; optimal SOC, fast, empirically verified.
 - **Dijkstra:** reliable correctness cross-check; produces identical SOC on every instance.

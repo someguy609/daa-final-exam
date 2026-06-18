@@ -26,7 +26,7 @@ const ALGORITHMS: { type: AlgorithmType; label: string }[] = [
 
 const density   = 0.15;   // 15% obstacle density — uniform across all scenarios
 const variance  = 0.50;   // 50% cost variance   — uniform across all scenarios
-const seed      = 'seed_test_5';
+const SEEDS     = ['seed_test_5', 'seed_test_6', 'seed_test_7'];
 const timeoutMs = 30000;  // 30 s per algorithm run
 
 async function runBenchmark() {
@@ -35,7 +35,7 @@ async function runBenchmark() {
 	console.log('============================================================');
 	console.log(`Obstacle density : ${density * 100}%  (uniform, all scenarios)`);
 	console.log(`Cost variance    : ${variance * 100}%  (uniform, all scenarios)`);
-	console.log(`Random seed      : "${seed}"`);
+	console.log(`Random seeds     : ${JSON.stringify(SEEDS)}`);
 	console.log(`Timeout / algo   : ${timeoutMs / 1000} s`);
 	console.log('------------------------------------------------------------\n');
 
@@ -45,75 +45,86 @@ async function runBenchmark() {
 		const vertices = sc.gridSize * sc.gridSize;
 		console.log(`▶  ${sc.name}  (vertices: ${vertices})...`);
 
-		let generated = null;
-		let genError  = '';
-		try {
-			generated = generateRandomScenario(
-				sc.gridSize, sc.gridSize,
-				density, variance,
-				sc.robotCount, sc.itemCount,
-				seed + '_' + sc.id
-			);
-		} catch (err: any) {
-			genError = err.message || 'Generation failed';
-		}
-
 		for (const alg of ALGORITHMS) {
-			if (!generated) {
-				results.push({
-					scenarioId: sc.id, name: sc.name, vertices,
-					robots: sc.robotCount, items: sc.itemCount,
-					obstacleDensityPct: density * 100,
-					algorithm: alg.label, success: 'No',
-					runtimeMs: 0, expandedNodes: 0,
-					soc: 0, makespan: 0, error: genError || 'Generation failed'
-				});
-				console.log(`   ✗ ${alg.label.padEnd(15)}: FAILED (generation error)`);
-				continue;
+			let totalRuntime = 0;
+			let totalNodes = 0;
+			let totalSOC = 0;
+			let totalMakespan = 0;
+			let successCount = 0;
+			let errors: string[] = [];
+
+			for (const currentSeed of SEEDS) {
+				let generated = null;
+				let genError  = '';
+				try {
+					generated = generateRandomScenario(
+						sc.gridSize, sc.gridSize,
+						density, variance,
+						sc.robotCount, sc.itemCount,
+						currentSeed + '_' + sc.id
+					);
+				} catch (err: any) {
+					genError = err.message || 'Generation failed';
+				}
+
+				if (!generated) {
+					errors.push(genError || 'Generation failed');
+					continue;
+				}
+
+				try {
+					const t0  = performance.now();
+					const res = runCBS(
+						generated.grid, generated.robots,
+						generated.docks, generated.robotGoals,
+						alg.type, timeoutMs
+					);
+					const dur = performance.now() - t0;
+
+					if (res.success) {
+						totalRuntime += res.searchMetrics.runtimeMs || dur;
+						totalNodes += res.searchMetrics.expandedNodes;
+						totalSOC += res.solutionMetrics.totalCost;
+						totalMakespan += res.solutionMetrics.makespan;
+						successCount++;
+					} else {
+						errors.push(res.errorMessage || 'Timeout');
+					}
+				} catch (err: any) {
+					errors.push(err.message || 'Crashed');
+				}
 			}
 
-			try {
-				const t0  = performance.now();
-				const res = runCBS(
-					generated.grid, generated.robots,
-					generated.docks, generated.robotGoals,
-					alg.type, timeoutMs
+			const displaySuccess = successCount > 0 ? (successCount === SEEDS.length ? 'Yes' : `Yes (${successCount}/${SEEDS.length})`) : 'No';
+			const avgRuntime = successCount > 0 ? Math.round(totalRuntime / successCount) : 0;
+			const avgNodes = successCount > 0 ? Math.round(totalNodes / successCount) : 0;
+			const avgSOC = successCount > 0 ? Math.round(totalSOC / successCount) : 0;
+			const avgMakespan = successCount > 0 ? Math.round(totalMakespan / successCount) : 0;
+			const combinedError = errors.length > 0 ? errors.join('; ') : '';
+
+			results.push({
+				scenarioId: sc.id, name: sc.name, vertices,
+				robots: sc.robotCount, items: sc.itemCount,
+				obstacleDensityPct: density * 100,
+				algorithm: alg.label,
+				success:       displaySuccess,
+				runtimeMs:     avgRuntime,
+				expandedNodes: avgNodes,
+				soc:           avgSOC,
+				makespan:      avgMakespan,
+				error:         combinedError
+			});
+
+			if (successCount > 0) {
+				console.log(
+					`   ✓ ${alg.label.padEnd(15)}: avg ${avgRuntime} ms | ` +
+					`avg nodes: ${avgNodes.toLocaleString()} | ` +
+					`avg SOC: ${avgSOC} | ` +
+					`avg makespan: ${avgMakespan} ` +
+					`(${successCount}/${SEEDS.length} seeds succeeded)`
 				);
-				const dur = performance.now() - t0;
-
-				results.push({
-					scenarioId: sc.id, name: sc.name, vertices,
-					robots: sc.robotCount, items: sc.itemCount,
-					obstacleDensityPct: density * 100,
-					algorithm: alg.label,
-					success:       res.success ? 'Yes' : 'No',
-					runtimeMs:     res.success ? Math.round(res.searchMetrics.runtimeMs || dur) : 0,
-					expandedNodes: res.success ? res.searchMetrics.expandedNodes : 0,
-					soc:           res.success ? res.solutionMetrics.totalCost    : 0,
-					makespan:      res.success ? res.solutionMetrics.makespan      : 0,
-					error:         res.errorMessage || (res.success ? '' : 'Timeout')
-				});
-
-				if (res.success) {
-					console.log(
-						`   ✓ ${alg.label.padEnd(15)}: ${Math.round(dur)} ms | ` +
-						`nodes: ${res.searchMetrics.expandedNodes.toLocaleString()} | ` +
-						`SOC: ${res.solutionMetrics.totalCost} | ` +
-						`makespan: ${res.solutionMetrics.makespan}`
-					);
-				} else {
-					console.log(`   ✗ ${alg.label.padEnd(15)}: TIMEOUT/FAILED (${res.errorMessage || ''})`);
-				}
-			} catch (err: any) {
-				results.push({
-					scenarioId: sc.id, name: sc.name, vertices,
-					robots: sc.robotCount, items: sc.itemCount,
-					obstacleDensityPct: density * 100,
-					algorithm: alg.label, success: 'No',
-					runtimeMs: 0, expandedNodes: 0,
-					soc: 0, makespan: 0, error: err.message || 'Crashed'
-				});
-				console.log(`   ✗ ${alg.label.padEnd(15)}: CRASHED (${err.message || err})`);
+			} else {
+				console.log(`   ✗ ${alg.label.padEnd(15)}: FAILED (all seeds failed/timed out: ${combinedError})`);
 			}
 		}
 		console.log('');
