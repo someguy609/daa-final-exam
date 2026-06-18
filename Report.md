@@ -1,8 +1,8 @@
 # Multi-Robot Router & Planner
 ### A Conflict-Based Search Approach to Multi-Agent Path Finding
 
-**Course:** EF234405 — Design & Analysis of Algorithms  
-**Exam:** Final Exam — Group Capstone Project  
+**Course:** EF234405 - Design & Analysis of Algorithms  
+**Exam:** Final Exam - Group Capstone Project  
 **Class:** International Undergraduate Program (IUP)  
 **Date:** June 2026  
 **Deadline:** 18 June 2026, 23:59 WIB  
@@ -22,58 +22,58 @@
 
 ---
 
-## §1 Design [20 pts]
+## 1. Design
 
-### 1.1 Problem Statement & Real-World Motivation (D1)
+### 1.1 Problem Statement & Real-World Motivation
 
-Modern fulfillment centres — operated by Amazon, Alibaba, and similar logistics companies — deploy large fleets of Autonomous Guided Vehicles (AGVs) to transport inventory from storage shelves to dispatch docks. Routing these robots efficiently is safety-critical and revenue-sensitive for three reasons. First, if two robots occupy the same corridor at the same time, a physical collision halts operations and requires costly human intervention. Second, warehouse floors exhibit variable traversal costs: wet zones, ramps, and high-traffic corridors have higher unit costs than open aisles. A flat-cost model would misrepresent real energy consumption. Third, minimising the total travel cost (Sum of Costs, SOC) directly maximises throughput per battery charge cycle across the whole fleet.
+Modern fulfillment centres (Amazon, Alibaba, and similar logistics companies) deploy large fleets of Autonomous Guided Vehicles (AGVs) to transport inventory from storage shelves to dispatch docks. Routing these robots efficiently is safety-critical and revenue-sensitive for three reasons. First, if two robots occupy the same corridor at the same time, a physical collision halts operations and requires costly human intervention. Second, warehouse floors exhibit variable traversal costs: wet zones, ramps, and high-traffic corridors carry higher unit costs than open aisles, so a flat-cost model would misrepresent real energy consumption. Third, minimising the total travel cost (Sum of Costs, SOC) directly maximises throughput per battery charge cycle across the whole fleet.
 
-Our project — the **Multi-Robot Router & Planner** — addresses this problem with a production-quality, interactive web application backed by a Conflict-Based Search (CBS) engine operating on a weighted grid graph. It is targeted at warehouse systems engineers who need to evaluate routing algorithms before fleet deployment.
+Our project, the Multi-Robot Router & Planner, addresses this problem with a production-quality interactive web application backed by a Conflict-Based Search (CBS) engine operating on a weighted grid graph. It is targeted at warehouse systems engineers who need to evaluate routing algorithms before fleet deployment.
 
-### 1.2 Formal Graph Model (D2)
+### 1.2 Formal Graph Model
 
 We model the warehouse as a directed, weighted, time-expanded graph **G = (V, E, w)**, defined precisely as follows.
 
 #### Vertices (V)
-Every traversable grid cell is a vertex, identified by its integer coordinate (x, y). Obstacle cells are excluded from V. For a W × H grid with obstacle density d, the expected cardinality is |V| ≈ W × H × (1 − d).
+Every traversable grid cell is a vertex, identified by its integer coordinate (x, y). Obstacle cells are excluded from V. For a W x H grid with obstacle density d, the expected cardinality is |V| = W x H x (1 - d).
 
 #### Edges (E)
-Two classes of directed edges exist for every vertex u ∈ V:
-- **Move edge:** (u, v) where ‖u − v‖₁ = 1 (4-connected grid, no diagonals)
-- **Wait edge:** (u, u) — robot remains stationary for one time step
+Two classes of directed edges exist for every vertex u in V:
+- **Move edge:** (u, v) where ||u - v||_1 = 1, for 4-connected grid movement (no diagonals).
+- **Wait edge:** (u, u), robot remains stationary for one time step.
 
 #### Weight Function (w)
-Each cell v carries a positive integer cost c(v) ∈ {1, …, 10}, drawn from a seeded random distribution controlled by the cost-variance parameter. Edge weights are:
-- w(u, v) = c(v)  for move edges (cost of entering cell v)
-- w(u, u) = 0     for wait edges (waiting consumes no energy, but advances time)
+Each cell v carries a positive integer cost c(v) in {1, ..., 10}, drawn from a seeded random distribution controlled by a cost-variance parameter. Edge weights are:
+- w(u, v) = c(v) for move edges (cost of entering cell v)
+- w(u, u) = 0 for wait edges (waiting consumes no movement energy)
 
 #### Agents (R)
-A fleet of k robots {R₁, …, Rₖ}. Each robot Rᵢ is stationed at a unique dock vertex Dᵢ ∈ V and must visit an assigned, ordered list of item vertices Iᵢ,₁, Iᵢ,₂, …, Iᵢ,mᵢ before returning to Dᵢ. Item-to-robot assignment and visiting order are pre-computed by the scenario generator using a Nearest-Neighbour heuristic from each robot's dock.
+A fleet of k robots {R\_1, ..., R\_k}. Each robot R\_i is stationed at a unique dock vertex D\_i in V and must visit an assigned, ordered list of item vertices I\_i,1, I\_i,2, ..., I\_i,m before returning to D\_i. Item-to-robot assignment and visiting order are pre-computed by the scenario generator using a Nearest-Neighbour heuristic from each robot's dock.
 
 #### Constraints
-A joint plan (P₁, …, Pₖ) is valid if and only if:
+A joint plan (P\_1, ..., P\_k) is valid if and only if:
 - **Vertex conflict free:** No two robots occupy the same vertex at the same time step t.
-- **Edge (swap) conflict free:** Robots i and j must not traverse the same edge in opposite directions during the same step (fromᵢ = toⱼ and toᵢ = fromⱼ at time t).
+- **Edge (swap) conflict free:** Robots i and j must not traverse the same edge in opposite directions during the same step (from\_i = to\_j and to\_i = from\_j at time t).
 
 #### Objectives
-- **Sum of Costs (SOC):** SOC = Σᵢ cost(Pᵢ) — total weighted travel cost across all robots. *(Primary objective.)*
-- **Makespan:** max(|P₁|, …, |Pₖ|) − 1 — time until the last robot completes its mission.
+- **Sum of Costs (SOC):** SOC = sum\_i cost(P\_i), total weighted travel cost across all robots. *(Primary objective.)*
+- **Makespan:** max(|P\_1|, ..., |P\_k|) - 1, time until the last robot completes its mission.
 
-### 1.3 Algorithm Selection & Justification (D3)
+### 1.3 Algorithm Selection & Justification
 
-We implement a two-level architecture. The high-level solver is **Conflict-Based Search (CBS)**, which resolves inter-robot collisions by adding constraints and replanning. At the low level, CBS invokes a single-agent pathfinder. We implement three interchangeable low-level solvers:
+We implement a two-level architecture. The high-level solver is **Conflict-Based Search (CBS)**, which resolves inter-robot collisions by iteratively adding space-time constraints and triggering individual replans. At the low level, CBS calls a single-agent pathfinder. We implement three interchangeable low-level solvers:
 
 | Algorithm | Priority f(n) | Optimal? | Role in Project |
 |---|---|---|---|
-| A\* Search | g(n) + h(n) | Yes | Algorithm A — primary solver |
-| Dijkstra | g(n)  (h=0) | Yes | Algorithm B — uninformed optimal baseline |
-| GBFS | h(n)  (g ignored) | No | Greedy baseline for quality–speed trade-off |
+| A\* | g(n) + h(n) | Yes | Algorithm A - primary solver |
+| Dijkstra | g(n) (h = 0) | Yes | Algorithm B - uninformed optimal baseline |
+| GBFS | h(n) (g ignored) | No | Greedy baseline for quality-speed trade-off |
 
-A\* was chosen as the primary algorithm (A) because the Manhattan-distance heuristic h(n) = |x − x_goal| + |y − y_goal| is both admissible (h(n) ≤ true cost to goal) and consistent on a 4-connected grid with positive integer weights, guaranteeing low-level optimality. Dijkstra (h ≡ 0) is the uninformed special case; it produces identical optimal paths, providing a built-in correctness cross-check. GBFS ignores accumulated cost entirely, yielding fast but suboptimal individual paths that often cause a conflict explosion at the CBS high level — an effect quantified in §3.
+A\* was chosen as the primary algorithm because its Manhattan-distance heuristic h(n) = |x - x\_goal| + |y - y\_goal| is both admissible and consistent on a 4-connected grid with positive integer weights, guaranteeing low-level path optimality. Dijkstra (h = 0) is the uninformed special case; it yields identical optimal paths and serves as a built-in correctness cross-check. GBFS ignores accumulated cost entirely, producing fast but suboptimal individual paths that frequently cause a conflict explosion at the CBS high level, an effect quantified in Section 3.
 
-### 1.4 Data Structures & System Architecture (D4)
+### 1.4 Data Structures & System Architecture
 
-- **Binary MinHeap:** Custom generic class (`heap.ts`) shared by all low-level searchers and the CBS CT-node queue. Push and pop both run in O(log n).
+- **Binary MinHeap:** Custom generic class (`heap.ts`) shared by all low-level searchers and the CBS constraint-tree node queue. Push and pop both run in O(log n).
 - **Space-time visited set:** Hash set keyed on the string `"(x,y,t)"` for O(1) duplicate-state detection.
 - **Constraint store:** Array of typed Constraint objects `{robotId, x, y, t, type}` passed from the CBS high level to each low-level planner invocation.
 - **Svelte reactive stores:** Bind algorithm output to UI state reactively without manual DOM manipulation.
@@ -82,47 +82,47 @@ A\* was chosen as the primary algorithm (A) because the Manhattan-distance heuri
 #### Module Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│               Multi-Robot Router & Planner                          │
-│                                                                      │
-│  ┌──────────────┐          ┌──────────────────────────────────────┐ │
-│  │  SvelteKit   │ postMsg  │         Web Worker Thread            │ │
-│  │  GUI         │◄────────►│  ┌───────────┐  ┌─────────────────┐ │ │
-│  │  (stores /   │          │  │ CBS Engine│─►│  Low-Level      │ │ │
-│  │   components)│          │  │ cbs.ts    │  │  Pathfinder     │ │ │
-│  └──────────────┘          │  └───────────┘  │  astar.ts       │ │ │
-│                            │                  │  dijkstra.ts    │ │ │
-│  ┌──────────────┐          │  ┌───────────┐  │  gbfs.ts        │ │ │
-│  │  CLI Bench-  │          │  │ Generator │  └─────────────────┘ │ │
-│  │  mark Runner │ direct   │  │generator.ts                      │ │
-│  │  benchmark.ts│─────────►│  └───────────┘   ┌──────────────┐  │ │
-│  └──────────────┘          │                   │ heap.ts /    │  │ │
-│                            │                   │ utils        │  │ │
-│                            └───────────────────┴──────────────┴──┘ │
-└──────────────────────────────────────────────────────────────────────┘
++---------------------------------------------------------------------------+
+|            Multi-Robot Router & Planner                                   |
+|                                                                           |
+|  +---------------+  postMsg  +--------------------------------------+     |
+|  | SvelteKit GUI |<-------->| Web Worker Thread                    |     |
+|  | (stores /     |          |  +-----------+  +-----------------+  |     |
+|  |  components)  |          |  | CBS Engine|->| Low-Level       |  |     |
+|  +---------------+          |  | cbs.ts    |  | Pathfinder      |  |     |
+|                             |  +-----------+  | astar.ts        |  |     |
+|  +---------------+  direct  |                 | dijkstra.ts     |  |     |
+|  | CLI Benchmark |--------->|  +-----------+  | gbfs.ts         |  |     |
+|  | benchmark.ts  |          |  | Generator |  +-----------------+  |     |
+|  +---------------+          |  | generator |  +-------------+      |     |
+|                             |  +-----------+  | heap.ts     |      |     |
+|                             +------------------+-------------+------+     |
++---------------------------------------------------------------------------+
 ```
 
 ---
 
-## §2 Implementation [50 pts]
+## 2. Implementation
 
-### 2.1 Module Overview (I1 – I5)
+> **Note on algorithm naming:** all three pathfinders (A\*, Dijkstra, GBFS) are used as the low-level solver within the CBS framework. CBS handles conflict detection and constraint propagation for every configuration. In the remainder of this report we refer to each configuration by its low-level algorithm name alone.
+
+### 2.1 Module Overview
 
 | File | Responsibility |
 |---|---|
 | `src/lib/algorithms/cbs/cbs.ts` | CBS high-level engine: CT-node management, conflict detection, constraint splitting |
-| `src/lib/algorithms/astar/astar.ts` | A\* low-level pathfinder — Algorithm A (primary) |
-| `src/lib/algorithms/dijkstra/dijkstra.ts` | Dijkstra low-level pathfinder — Algorithm B (uninformed optimal baseline) |
-| `src/lib/algorithms/gbfs/gbfs.ts` | GBFS low-level pathfinder — greedy heuristic baseline |
+| `src/lib/algorithms/astar/astar.ts` | A\* low-level pathfinder (Algorithm A - primary) |
+| `src/lib/algorithms/dijkstra/dijkstra.ts` | Dijkstra low-level pathfinder (Algorithm B - uninformed optimal baseline) |
+| `src/lib/algorithms/gbfs/gbfs.ts` | GBFS low-level pathfinder (greedy heuristic baseline) |
 | `src/lib/utils/heap.ts` | Generic binary MinHeap used by all solvers |
 | `src/lib/simulation/generators/generator.ts` | Seeded random warehouse scenario generator |
 | `src/lib/stores/simulationStore.ts` | Svelte stores + Web Worker message dispatch |
-| `src/lib/utils/pathfinding.worker.ts` | Web Worker: handles PLAN_SINGLE / RUN_BENCHMARK messages |
-| `scripts/benchmark.ts` | Standalone CLI reproducibility harness — writes `benchmark_results.csv` |
+| `src/lib/utils/pathfinding.worker.ts` | Web Worker: PLAN\_SINGLE / RUN\_BENCHMARK messages |
+| `scripts/benchmark.ts` | CLI reproducibility harness, writes `benchmark_results.csv` |
 
-### 2.2 MinHeap — Core Shared Data Structure (I4)
+### 2.2 MinHeap - Core Shared Data Structure
 
-All three low-level pathfinders and the CBS CT-node queue share one custom generic MinHeap. It stores `{score, element}` pairs and maintains the heap property via sift-up (on push) and sift-down (on pop), each in O(log n).
+All three low-level pathfinders and the CBS constraint-tree node queue share one custom generic MinHeap. It stores `{score, element}` pairs and maintains the heap property via sift-up on push and sift-down on pop, each in O(log n).
 
 ```typescript
 // src/lib/utils/heap.ts
@@ -150,85 +150,83 @@ export class MinHeap<T> {
       i = p;
     }
   }
-  // down() is the symmetric mirror (omitted for brevity)
+  // down() is the symmetric mirror of up() (omitted for brevity)
 }
 ```
 
-### 2.3 A\* Low-Level Pathfinder — Algorithm A (I1)
+### 2.3 A\* Low-Level Pathfinder (Algorithm A)
 
-A\* operates in space-time: each state is (x, y, t). It is prioritised by f(n) = g(n) + h(n) where g accumulates weighted edge costs and h = Manhattan distance to the goal. The planner respects CBS vertex and edge constraints passed from above, and supports wait actions (cost 0, t advances by 1).
+A\* operates in space-time: each state is (x, y, t). It is prioritised by f(n) = g(n) + h(n) where g accumulates weighted edge costs and h is the Manhattan distance to the goal. The planner respects CBS vertex and edge constraints passed from the high level, and supports wait actions (zero movement cost, t advances by 1).
 
 ```typescript
-// src/lib/algorithms/astar/astar.ts — inner expansion loop
+// src/lib/algorithms/astar/astar.ts -- inner expansion loop
 while (!heap.isEmpty()) {
   const { x, y, t, gCost, path } = heap.pop()!;
   if (visited.has(`${x},${y},${t}`)) continue;
   visited.add(`${x},${y},${t}`);
 
   if (x === goal.x && y === goal.y) {
-    // accept only if no future constraints force us off the goal
     if (!isFinalSegment || !hasConstraintAtOrAfter(constraints, robotId, x, y, t))
       return { path, expandedNodes, generatedNodes, peakFrontierSize };
   }
 
-  for (let i = 0; i < 4; i++) {            // 4-directional moves
+  for (let i = 0; i < 4; i++) {          // 4-directional moves
     const nx = x + dx[i], ny = y + dy[i];
     if (isValidCell(grid, nx, ny)
         && !hasVertexConstraint(constraints, robotId, nx, ny, t+1)
         && !hasEdgeConstraint  (constraints, robotId, x, y, nx, ny, t)) {
       const nextG = gCost + grid[ny][nx].cost;
       const nextH = Math.abs(nx-goal.x) + Math.abs(ny-goal.y);
-      heap.push({ x:nx, y:ny, t:t+1, gCost:nextG, path:[...path,{x:nx,y:ny,t:t+1}] },
-                 nextG + nextH);            // f = g + h
+      heap.push({x:nx,y:ny,t:t+1,gCost:nextG,path:[...path,{x:nx,y:ny,t:t+1}]},
+                 nextG + nextH);          // f = g + h
     }
   }
-  // Wait action (only while constraints are still active)
-  if (t <= maxConstraintTime)
-    heap.push({ x, y, t:t+1, gCost, path:[...path,{x,y,t:t+1}] },
-               gCost + h(x,y));             // f = g + h (position unchanged)
+  if (t <= maxConstraintTime)             // wait action
+    heap.push({x,y,t:t+1,gCost,path:[...path,{x,y,t:t+1}]},
+               gCost + getHeuristic(x,y));
 }
 ```
 
-### 2.4 Dijkstra Low-Level Pathfinder — Algorithm B (I2)
+### 2.4 Dijkstra Low-Level Pathfinder (Algorithm B)
 
-Dijkstra is identical to A\* except that h ≡ 0, so the priority key reduces to g(n) alone. This makes Dijkstra an uninformed, radially expanding search that is still cost-optimal.
+Dijkstra is identical to A\* except h = 0, so the priority reduces to g(n) alone. This produces an uninformed, radially expanding search that is still cost-optimal and serves as a baseline to cross-validate A\*.
 
 ```typescript
-// src/lib/algorithms/dijkstra/dijkstra.ts — priority key (only difference from A*)
+// src/lib/algorithms/dijkstra/dijkstra.ts -- priority key (only difference from A*)
 heap.push(
   { x: nx, y: ny, t: nextT, gCost: nextGCost, path: nextPath },
-  nextGCost     // <-- pure g(n); no heuristic term
+  nextGCost     // pure g(n); no heuristic term
 );
 
 // Wait action:
 heap.push(
   { x, y, t: nextT, gCost, path: nextPath },
-  gCost         // <-- same: priority is g(n) only
+  gCost         // priority is g(n) only
 );
 ```
 
-### 2.5 GBFS Low-Level Pathfinder — Greedy Baseline (I2)
+### 2.5 GBFS Low-Level Pathfinder (Greedy Baseline)
 
-GBFS prioritises nodes by h(n) only, ignoring accumulated cost g(n). It finds paths quickly but sacrifices optimality. In the multi-robot setting, suboptimal individual paths intersect more frequently, causing the CBS high-level solver to resolve far more conflicts.
+GBFS prioritises nodes by h(n) alone, ignoring accumulated cost g(n). It finds paths quickly but sacrifices optimality. In the multi-robot setting, suboptimal individual paths intersect more frequently, causing the CBS solver to resolve far more conflicts and often resulting in longer overall runtimes.
 
 ```typescript
-// src/lib/algorithms/gbfs/gbfs.ts — priority key
+// src/lib/algorithms/gbfs/gbfs.ts -- priority key
 const nextH = Math.abs(nx - goal.x) + Math.abs(ny - goal.y);
 heap.push(
-  { x: nx, y: ny, t: nextT, gCost: nextGCost, hCost: nextH, path: nextPath },
-  nextH         // <-- priority is h(n) only (greedy)
+  { x:nx, y:ny, t:nextT, gCost:nextGCost, hCost:nextH, path:nextPath },
+  nextH         // priority is h(n) only (greedy)
 );
 ```
 
-### 2.6 CBS High-Level Engine (I1)
+### 2.6 CBS High-Level Engine
 
-CBS maintains a Constraint Tree (CT). Each node stores a constraint set and one path per robot planned under those constraints. Nodes are stored in a MinHeap keyed by Sum of Costs (SOC), so the first conflict-free node popped is guaranteed to be optimal.
+CBS maintains a Constraint Tree (CT). Each node stores a constraint set and one path per robot planned under those constraints. Nodes are held in a MinHeap keyed by Sum of Costs (SOC), so the first conflict-free node popped is guaranteed to be SOC-optimal.
 
 ```typescript
-// src/lib/algorithms/cbs/cbs.ts — main CBS loop (simplified)
+// src/lib/algorithms/cbs/cbs.ts -- main CBS loop (simplified)
 export function runCBS(grid, robots, docks, robotGoals, algorithm, timeoutMs) {
 
-  // Root node: plan every robot independently with no constraints
+  // Root: plan each robot independently with no constraints
   const rootPaths: Record<string, Path> = {};
   for (const robot of robots)
     rootPaths[robot.id] = planRobotPath(grid, robot.id, dock, goals, [], algorithm);
@@ -237,23 +235,22 @@ export function runCBS(grid, robots, docks, robotGoals, algorithm, timeoutMs) {
   heap.push(rootNode, computeSOC(rootPaths));
 
   while (!heap.isEmpty()) {
-    const node     = heap.pop();                  // lowest-SOC node
-    const conflict = detectConflict(node.paths);  // first vertex or edge conflict
+    const node     = heap.pop();                 // lowest-SOC node
+    const conflict = detectConflict(node.paths); // first vertex or edge conflict
 
-    if (!conflict) return success(node.paths);    // no conflict => optimal solution
+    if (!conflict) return success(node.paths);   // no conflict => optimal
 
-    // Split on the conflict: one child per agent
     for (const agentId of [conflict.robotA, conflict.robotB]) {
       const childConstraints = [
         ...node.constraints,
-        { robotId: agentId, x: conflict.x, y: conflict.y,
-          t: conflict.t, type: conflict.type }
+        { robotId:agentId, x:conflict.x, y:conflict.y,
+          t:conflict.t, type:conflict.type }
       ];
       const newPath = planRobotPath(grid, agentId, dock, goals,
                                     childConstraints, algorithm);
       if (newPath) {
         const childPaths = { ...node.paths, [agentId]: newPath };
-        heap.push({ constraints: childConstraints, paths: childPaths },
+        heap.push({ constraints:childConstraints, paths:childPaths },
                    computeSOC(childPaths));
       }
     }
@@ -262,136 +259,132 @@ export function runCBS(grid, robots, docks, robotGoals, algorithm, timeoutMs) {
 }
 ```
 
-### 2.7 How to Build, Run & Benchmark (I5)
+### 2.7 How to Build, Run & Benchmark
 
 **Prerequisites:** Node.js v18 or later, pnpm package manager.
 
 ```bash
-# Install all dependencies
+# Install dependencies
 pnpm install
 
 # Run interactive web demo
 pnpm run dev
-# Open http://localhost:5173 in the browser.
-# Use the toolbar: Generate Scenario → Select Algorithm → Calculate Routing.
+# Open http://localhost:5173
+# Toolbar: Generate Scenario > Select Algorithm > Calculate Routing
 
 # Reproducible CLI benchmark (one command)
 pnpm benchmark
-# Fixed seed: "bench_seed" | obstacle density: 15% | cost variance: 50%
-# Prints summary table to console.
-# Writes: benchmark_results.csv in the project root.
+# Seed: "bench_seed" | Obstacle density: 15% | Cost variance: 50%
+# Prints summary table; writes benchmark_results.csv
 ```
 
 ---
 
-## §3 Analysis & Evaluation [25 pts]
+## 3. Analysis & Evaluation
 
-### 3.1 Correctness — CBS with Optimal Low-Level Search is SOC-Optimal (A1)
+### 3.1 Correctness - CBS with Optimal Low-Level Search is SOC-Optimal
 
 We prove that CBS with A\* (or Dijkstra) as the low-level solver returns a conflict-free solution whose Sum of Costs is globally minimum.
 
-**Lemma 1 — Low-Level Optimality.**
-If edge weights are positive and the heuristic h is admissible (h(n) ≤ true cost to goal) and consistent (h(n) ≤ w(n, n') + h(n')), then A\* returns a shortest path under any fixed constraint set. The Manhattan distance on a 4-connected grid with integer weights c(v) ≥ 1 satisfies both conditions; Dijkstra satisfies them trivially (h ≡ 0 ≤ anything).
+**Lemma 1 - Low-Level Optimality.**
+If edge weights are positive and the heuristic h is admissible and consistent, then A\* returns a shortest path under any fixed constraint set. The Manhattan distance on a 4-connected grid with integer weights c(v) >= 1 satisfies both conditions. Dijkstra satisfies them trivially (h = 0).
 
-**Lemma 2 — CT Root is a Lower Bound.**
-The root CT-node plans each robot with no inter-agent constraints. Relaxing constraints can only decrease (or preserve) path cost, so SOC(root) ≤ SOC(any conflict-free solution).
+**Lemma 2 - CT Root is a Lower Bound.**
+The root CT-node plans each robot with no inter-agent constraints. Relaxing constraints can only decrease or preserve path cost, so SOC(root) <= SOC(any conflict-free solution).
 
-**Lemma 3 — Constraint Splitting is Complete.**
-Given a vertex conflict (Rᵢ, Rⱼ, v, t), any valid conflict-free solution must have either Rᵢ avoid v at t, or Rⱼ avoid v at t, or both. The CBS split creates one child for each case, so at least one child subtree contains the optimal solution. The same argument applies to edge conflicts.
+**Lemma 3 - Constraint Splitting is Complete.**
+Given a vertex conflict (R\_i, R\_j, v, t), any valid conflict-free solution must have R\_i avoid v at t, or R\_j avoid v at t, or both. The CBS split creates one child for each case, ensuring at least one child subtree contains the optimal solution. The same argument applies to edge conflicts.
 
-**Theorem — CBS + A\* / Dijkstra is Optimal.**
-CBS explores the CT in Best-First order by SOC (Lemma 2 ensures the heap is admissible). Adding constraints to a child node can only increase or maintain its SOC (monotonicity, by Lemma 1). Therefore the first conflict-free node popped has minimum SOC across all conflict-free solutions. CBS terminates because the constraint space is finite. ∎
+**Theorem - CBS with A\* / Dijkstra is Optimal.**
+CBS explores the Constraint Tree in Best-First order by SOC (Lemma 2). Adding constraints to a child node can only increase or maintain its SOC (monotonicity, by Lemma 1). Therefore the first conflict-free node popped has the minimum SOC across all conflict-free solutions. CBS terminates because the constraint space is finite.
 
-### 3.2 Complexity Analysis (A2)
+### 3.2 Complexity Analysis
 
 #### Low-Level Pathfinders
 
-The state space is (x, y, t) with |V| cells and T_max time steps. Using a binary MinHeap for the open list:
-
 | Algorithm | Time Complexity | Space Complexity | Notes |
 |---|---|---|---|
-| A\* | O(\|V\|·T_max · log(\|V\|·T_max)) | O(\|V\|·T_max) | Heuristic prunes large fractions of the space |
-| Dijkstra | O(\|V\|·T_max · log(\|V\|·T_max)) | O(\|V\|·T_max) | Same bound but no pruning; expands more nodes |
-| GBFS | O(\|V\|·T_max · log(\|V\|·T_max)) | O(\|V\|·T_max) | Often faster per path but not cost-optimal |
+| A\* | O(\|V\|*T\_max * log(\|V\|*T\_max)) | O(\|V\|*T\_max) | Heuristic prunes large fractions of the space |
+| Dijkstra | O(\|V\|*T\_max * log(\|V\|*T\_max)) | O(\|V\|*T\_max) | Same bound but expands more nodes (no pruning) |
+| GBFS | O(\|V\|*T\_max * log(\|V\|*T\_max)) | O(\|V\|*T\_max) | Often fewer per-path expansions but suboptimal |
 
 #### High-Level CBS
 
-Let C be the number of constraints added before finding the optimal conflict-free solution:
-- **Time:** O(2^C · k · |V|·T_max · log(|V|·T_max)) — exponential worst case, polynomial in practice for sparse-conflict instances.
-- **Space:** O(2^C · k · |V|·T_max) — open CT-nodes plus their path sets.
+- **Time:** O(2^C * k * |V|\*T\_max * log(|V|\*T\_max)), exponential worst case, polynomial in practice for sparse-conflict instances.
+- **Space:** O(2^C * k * |V|\*T\_max), open CT-nodes plus their path sets.
 
-### 3.3 Comparative Analysis — A\* vs Dijkstra (A3)
+### 3.3 Comparative Analysis
 
-Both A\* and Dijkstra are cost-optimal at the low level. They always produce the same SOC (verified empirically — see §3.4 cross-check). The key differences are in efficiency:
+Both A\* and Dijkstra are cost-optimal at the low level. They produce identical SOC values in every benchmark run. The key differences are in efficiency:
 
-- **Nodes expanded:** A\* expands significantly fewer states due to heuristic guidance. In S4 (1,024 vertices), A\* expands 25,313 nodes vs. Dijkstra's 45,715 — a 1.8× reduction.
-- **Runtime:** A\* is consistently faster. In S5 (2,025 vertices), A\* finishes in 53 ms vs. Dijkstra's 172 ms — a 3.2× speedup.
-- **Regime preference:** A\* dominates on large grids where the heuristic provides strong guidance. Dijkstra has a marginal advantage on trivially small grids where heuristic overhead is non-negligible.
-- **GBFS vs optimal:** GBFS is the fastest low-level planner per path, but its suboptimal routes cause dramatically more CBS conflicts. In S4, GBFS + CBS took 4,165 ms — over 126× slower than A\* + CBS (33 ms) — confirming that greedy low-level search is counterproductive in multi-agent settings.
+- **Nodes expanded:** A\* expands significantly fewer states through heuristic guidance. In S4 (1,024 vertices), A\* expands 25,313 nodes vs. Dijkstra's 45,715, a 1.8x reduction.
+- **Runtime:** A\* is consistently faster on large grids. In S5 (2,025 vertices), A\* finishes in 53 ms vs. Dijkstra's 172 ms, a 3.2x speedup.
+- **Regime preference:** A\* dominates on large grids where the heuristic provides strong guidance. Dijkstra is marginally preferable on trivially small grids where heuristic computation overhead is non-negligible.
+- **GBFS vs optimal:** GBFS produces fewer per-path expansions on small grids but its suboptimal routes cause dramatically more CBS conflicts. In S4, GBFS took 4,165 ms against A\*'s 33 ms, a 126x runtime penalty.
 
-### 3.4 Empirical Study (A4)
+### 3.4 Empirical Study
 
 #### Experimental Setup
 
 - **Machine:** Linux x86_64, Intel Core i7, 16 GB RAM.
 - **Runtime:** Node.js 24, TypeScript 5, tsx 4.22.4.
-- **Timing:** Wall-clock time via `performance.now()` around the full `runCBS()` call. Single run; seed fixed to `"bench_seed"`.
-- **Obstacle density:** 15% — **uniform across all five scenarios.**
-- **Cost variance:** 50% — **uniform across all five scenarios.** Cell costs drawn from {1, …, 10}.
-- **Scale:** 5 scenarios — 36, 144, 400, 1,024, 2,025 vertices (spanning 56× from S1 to S5; justified as the near-two-orders-of-magnitude sweep limit imposed by CBS memory constraints).
+- **Timing:** Wall-clock time via `performance.now()` around the full `runCBS()` call. Single run per configuration; seed fixed to `"bench_seed"`.
+- **Obstacle density:** 15%, uniform across all five scenarios.
+- **Cost variance:** 50%, uniform across all five scenarios. Cell costs drawn from {1, ..., 10}.
+- **Scale:** 5 scenarios spanning 36 to 2,025 vertices (56x increase from S1 to S5).
 
-#### Results Table — Runtime, SOC, and Makespan
+#### Results (bold = best per metric per scenario; lower is better for all metrics)
 
 | ID | Vertices | Robots | Items | Obstacles | Algorithm | Runtime (ms) | Nodes Exp. | SOC | Makespan |
 |---|---|---|---|---|---|---|---|---|---|
-| S1 | 36 | 2 | 6 | 15% | A\* + CBS | 8 | 4,167 | 106 | 31 |
-| S1 | 36 | 2 | 6 | 15% | Dijkstra + CBS | 5 | 2,115 | 106 | 24 |
-| S1 | 36 | 2 | 6 | 15% | GBFS + CBS | 3 | 434 | 290 | 68 |
-| S2 | 144 | 2 | 6 | 15% | A\* + CBS | 1 | 510 | 144 | 25 |
-| S2 | 144 | 2 | 6 | 15% | Dijkstra + CBS | 3 | 1,179 | 144 | 25 |
-| S2 | 144 | 2 | 6 | 15% | GBFS + CBS | 0 | 56 | 166 | 24 |
-| S3 | 400 | 2 | 6 | 15% | A\* + CBS | 6 | 6,158 | 254 | 60 |
-| S3 | 400 | 2 | 6 | 15% | Dijkstra + CBS | 23 | 16,859 | 254 | 61 |
-| S3 | 400 | 2 | 6 | 15% | GBFS + CBS | 1 | 111 | 312 | 54 |
-| S4 | 1,024 | 2 | 6 | 15% | A\* + CBS | 33 | 25,313 | 290 | 73 |
-| S4 | 1,024 | 2 | 6 | 15% | Dijkstra + CBS | 52 | 45,715 | 290 | 73 |
-| S4 | 1,024 | 2 | 6 | 15% | GBFS + CBS | 4,165 | 97,843 | 2,253 | 667 |
-| S5 | 2,025 | 2 | 6 | 15% | A\* + CBS | 53 | 35,541 | 535 | 117 |
-| S5 | 2,025 | 2 | 6 | 15% | Dijkstra + CBS | 172 | 89,549 | 535 | 115 |
-| S5 | 2,025 | 2 | 6 | 15% | GBFS + CBS | 2,306 | 36,877 | 9,102 | 2,113 |
+| S1 | 36 | 2 | 6 | 15% | A\* | 8 | 4,167 | **106** | 31 |
+| S1 | 36 | 2 | 6 | 15% | Dijkstra | **5** | 2,115 | **106** | **24** |
+| S1 | 36 | 2 | 6 | 15% | GBFS | **3** | **434** | 290 | 68 |
+| S2 | 144 | 2 | 6 | 15% | A\* | 1 | 510 | **144** | 25 |
+| S2 | 144 | 2 | 6 | 15% | Dijkstra | 3 | 1,179 | **144** | 25 |
+| S2 | 144 | 2 | 6 | 15% | GBFS | **0** | **56** | 166 | **24** |
+| S3 | 400 | 2 | 6 | 15% | A\* | 6 | 6,158 | **254** | 60 |
+| S3 | 400 | 2 | 6 | 15% | Dijkstra | 23 | 16,859 | **254** | 61 |
+| S3 | 400 | 2 | 6 | 15% | GBFS | **1** | **111** | 312 | **54** |
+| S4 | 1,024 | 2 | 6 | 15% | A\* | **33** | **25,313** | **290** | **73** |
+| S4 | 1,024 | 2 | 6 | 15% | Dijkstra | 52 | 45,715 | **290** | **73** |
+| S4 | 1,024 | 2 | 6 | 15% | GBFS | 4,165 | 97,843 | 2,253 | 667 |
+| S5 | 2,025 | 2 | 6 | 15% | A\* | **53** | **35,541** | **535** | 117 |
+| S5 | 2,025 | 2 | 6 | 15% | Dijkstra | 172 | 89,549 | **535** | **115** |
+| S5 | 2,025 | 2 | 6 | 15% | GBFS | 2,306 | 36,877 | 9,102 | 2,113 |
 
-### 3.5 Theory vs Practice & Correctness Cross-Check (A5)
+### 3.5 Theory vs Practice & Correctness Cross-Check
 
 #### Correctness Cross-Check
 
-A\* + CBS and Dijkstra + CBS produce **identical SOC values** on every scenario (106, 144, 254, 290, 535). This empirically confirms that both low-level implementations are correct and that the CBS engine applies constraints and computes path costs consistently. GBFS + CBS returns strictly higher SOC values in all cases (290, 166, 312, 2,253, 9,102), confirming the theoretical prediction that greedy search is suboptimal.
+A\* and Dijkstra produce identical SOC values on every scenario (106, 144, 254, 290, 535). This empirically confirms that both low-level implementations are correct and that the CBS engine applies constraints and computes path costs consistently. GBFS returns strictly higher SOC in all cases (290, 166, 312, 2,253, 9,102), confirming the theoretical prediction that greedy search is suboptimal.
 
-The Makespan values differ slightly between A\* and Dijkstra even at the same SOC (e.g., S1: A\* makespan=31 vs. Dijkstra=24). This is expected: the two algorithms may find different optimal-cost paths through the space-time graph that happen to have different lengths. The SOC remains equal but one solution may allow a robot to arrive earlier at lower path length.
+Makespan values differ slightly between A\* and Dijkstra at equal SOC (e.g., S1: A\* makespan 31 vs. Dijkstra 24). This is expected: both algorithms may find different optimal-cost paths through the space-time graph with different total lengths.
 
 #### Empirical Growth Rate
 
-For A\* + CBS, wall-clock runtime grows from 8 ms at S1 (36 vertices) to 53 ms at S5 (2,025 vertices) — a 6.6× runtime increase for a 56× increase in grid size. The sub-linear scaling confirms that CBS conflict resolution remains manageable with 2 robots and 6 items, as the CT tree stays shallow.
+For A\*, wall-clock runtime grows from 8 ms at S1 (36 vertices) to 53 ms at S5 (2,025 vertices), a 6.6x increase for a 56x increase in grid size. Sub-linear scaling confirms that CBS conflict resolution remains manageable with 2 robots and 6 items, as the constraint tree stays shallow.
 
-For GBFS + CBS, the conflict explosion is dramatic at S4: 4,165 ms vs. A\*'s 33 ms. This is a 126× runtime penalty despite GBFS finding individual paths in fewer node expansions. The GBFS makespan at S4 (667 steps) vs. A\*'s makespan (73 steps) reveals the extreme suboptimality — robots take 9× longer paths that weave across the grid and collide repeatedly.
+For GBFS the conflict explosion is dramatic at S4: 4,165 ms vs. A\*'s 33 ms. The GBFS makespan at S4 (667 steps) vs. A\*'s (73 steps) reveals extreme suboptimality: robots take roughly 9x longer paths that generate many pairwise conflicts.
 
-The obstacle density is fixed at 15% across all five scenarios, ensuring that observed runtime differences are attributable to grid size and agent-count scaling alone, not to variations in obstacle placement.
+Obstacle density is fixed at 15% across all scenarios, ensuring that observed runtime differences are attributable to grid-size and agent-count scaling alone.
 
 ---
 
-## §4 Conclusion [5 pts]
+## 4. Conclusion
 
-### 4.1 Summary of Findings (C1)
+### 4.1 Summary of Findings
 
-We designed and built a complete Multi-Agent Path Finding system for warehouse logistics, formulated as a weighted space-time graph. Conflict-Based Search with A\* as the low-level planner is both correct — proven optimal through the admissibility and monotonicity arguments in §3.1 — and practical, solving 45×45 grids with 2 robots and 6 items in 53 ms.
+We designed and built a complete Multi-Agent Path Finding system for warehouse logistics, formulated as a weighted space-time graph. CBS with A\* as the low-level planner is both correct (proven SOC-optimal in Section 3.1) and practical, solving 45x45 grids with 2 robots and 6 items in 53 ms.
 
-- **A\* + CBS** is the recommended production algorithm: optimal SOC, fast, and empirically verified.
-- **Dijkstra + CBS** provides a reliable correctness cross-check: it produces identical SOC on every instance and expands nodes in a predictable radial pattern useful for debugging.
-- **GBFS + CBS** is ill-suited for multi-robot environments: suboptimal individual paths create a collision cascade at the CBS level, increasing total runtime by up to two orders of magnitude compared to A\*.
+- **A\*:** recommended production algorithm; optimal SOC, fast, empirically verified.
+- **Dijkstra:** reliable correctness cross-check; produces identical SOC on every instance.
+- **GBFS:** ill-suited for multi-robot environments; suboptimal paths create a conflict cascade that increases total runtime by up to two orders of magnitude compared to A\*.
 
 ### 4.2 Limitations
 
-- **CBS scalability:** CBS is NP-hard in the worst case. With many robots on dense grids, CT-node explosion renders it impractical without further enhancements (e.g., Enhanced CBS or Priority-Based Search).
-- **Heuristic on weighted grids:** The Manhattan-distance heuristic counts steps, not weighted costs. A precomputed True-Distance heuristic (BFS from goal on the actual weight map) would prune more nodes and reduce runtimes further.
+- **CBS scalability:** CBS is NP-hard in the worst case. With many robots on dense grids, CT-node explosion renders it impractical without enhancements such as Enhanced CBS or Priority-Based Search.
+- **Heuristic on weighted grids:** The Manhattan-distance heuristic counts steps rather than weighted costs. A precomputed True-Distance heuristic (BFS from goal on the actual weight map) would prune more nodes and reduce runtimes further.
 - **Single-seed evaluation:** All benchmark runs use one fixed seed. Variance across seeds and obstacle configurations is not captured.
 
 ### 4.3 Future Work
@@ -401,26 +394,53 @@ We designed and built a complete Multi-Agent Path Finding system for warehouse l
 - **Multi-seed statistical evaluation** with confidence intervals and multiple obstacle families.
 - **Docker container packaging** so the benchmark is fully reproducible on any machine without manual setup.
 
-### 4.4 Group Contribution Table (C1)
+### 4.4 Group Contribution Table
 
 | Name | Student ID | Contribution | Role & Responsibility |
 |---|---|---|---|
-| [Full Name 1] | [ID 1] | 34% | Formal graph model (§1); A\*, Dijkstra, GBFS implementations; correctness proof (§3.1) |
+| [Full Name 1] | [ID 1] | 34% | Formal graph model; A\*, Dijkstra, GBFS implementations; correctness proof |
 | [Full Name 2] | [ID 2] | 33% | CBS engine; Web Worker integration; SvelteKit GUI; scenario generator |
-| [Full Name 3] | [ID 3] | 33% | CLI benchmark harness (`scripts/benchmark.ts`); complexity analysis; empirical study; this report |
+| [Full Name 3] | [ID 3] | 33% | CLI benchmark harness; complexity analysis; empirical study; this report |
 
 ---
 
 ## References
 
-[1] Sharon, G., Stern, R., Felner, A., & Sturtevant, N. (2015). Conflict-Based Search for Optimal Multi-Agent Pathfinding. *Artificial Intelligence*, 219, 40–66.
+[1] Sharon, G., Stern, R., Felner, A., & Sturtevant, N. (2015). Conflict-Based Search for Optimal Multi-Agent Pathfinding. *Artificial Intelligence*, 219, 40-66.
 
-[2] Hart, P. E., Nilsson, N. J., & Raphael, B. (1968). A Formal Basis for the Heuristic Determination of Minimum Cost Paths. *IEEE Transactions on Systems Science and Cybernetics*, 4(2), 100–107.
+[2] Hart, P. E., Nilsson, N. J., & Raphael, B. (1968). A Formal Basis for the Heuristic Determination of Minimum Cost Paths. *IEEE Transactions on Systems Science and Cybernetics*, 4(2), 100-107.
 
-[3] Dijkstra, E. W. (1959). A Note on Two Problems in Connexion with Graphs. *Numerische Mathematik*, 1(1), 269–271.
+[3] Dijkstra, E. W. (1959). A Note on Two Problems in Connexion with Graphs. *Numerische Mathematik*, 1(1), 269-271.
 
-[4] Stern, R., et al. (2019). Multi-Agent Pathfinding: Definitions, Variants, and Benchmarks. *SOCS 2019*.
+[4] Stern, R., et al. (2019). Multi-Agent Pathfinding: Definitions, Variants, and Benchmarks. *Proceedings of SOCS 2019*.
 
 [5] SvelteKit Documentation. (2024). https://kit.svelte.dev/docs
 
 [6] Node.js v24 Release Notes. (2024). https://nodejs.org/en/blog/release
+
+---
+
+## Academic Integrity Pledge
+
+**EF234405 Design & Analysis of Algorithms - Final Exam**  
+Group Capstone Project
+
+---
+
+*By the name of Allah (God) Almighty, I hereby pledge and declare that I have completed this Final Exam project as part of my team's independent work. I have not engaged in cheating, plagiarism, or received unauthorized assistance in any form. I further declare that any use of external resources, references, or tools has been fully disclosed in the report and adheres to the guidelines provided. I am fully aware of and understand that I will accept all consequences if I am found to have violated this academic integrity pledge.*
+
+---
+
+Surabaya, 18 June 2026
+
+&nbsp;
+
+| | | |
+|:---:|:---:|:---:|
+| _______________________ | _______________________ | _______________________ |
+| **[Full Name 1]** | **[Full Name 2]** | **[Full Name 3]** |
+| [Student ID 1] | [Student ID 2] | [Student ID 3] |
+
+---
+
+*This Declaration must be signed by all members and included as `Declaration.pdf` in the final submission ZIP archive.*
